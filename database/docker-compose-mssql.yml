@@ -1,0 +1,20 @@
+# COMP90082 - Project VIOLET - Team Bluering
+# Clarisca Lawrencia - clawrencia@student.unimelb.edu.au
+# I Gede Wibawa Cakramurti - icakramurti@student.unimelb.edu.au
+# Jeanelle Abanto - jabanto@student.unimelb.edu.au
+# Nuvi Anggaresti - nanggaresti@student.unimelb.edu.au
+# Xinye Tang - xinyet@student.unimelb.edu.au
+
+version: '3.6'
+services:
+  mssql:
+    container_name: main-mssql
+    image: mcr.microsoft.com/mssql/server:2019-CU12-ubuntu-20.04
+    user: root
+    ports:
+      - 1433:1433
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=ProjViolet!1
+    volumes:
+      - /var/opt/mssql:/var/opt/mssql
