@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, flash, redirect, url_for, mak
 
 import os, time
 
-# mysql
+# sql
 from flask_sqlalchemy import SQLAlchemy
 
 def get32():
