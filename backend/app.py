@@ -15,7 +15,7 @@ app.config['JSON_AS_ASCII'] = False
 app.config["SECRET_KEY"] = '123456'
 
 # database
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:Hxz960722@127.0.0.1/textblocks'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql://root:pwd@127.0.0.1/xxxtable'
 # app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # app.config["SQLALCHEMY_COMMIT_ON_TEARDOWN"] = True
 
