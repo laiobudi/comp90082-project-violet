@@ -2,7 +2,7 @@
 
 #                        c     /    a
 #                             /                         a - target_val           c - d
-#	    					 /                         ---------------   =   ---------------
+# 	    					 /                         ---------------   =   ---------------
 # (target_known_val) d	    /    (target_val)               a - b                c - e
 #                          /
 #                         /
@@ -10,12 +10,12 @@
 
 ####  interpolation(a, b, c, d, e) -> return target
 def interpolation(a, b, c, e, d):
-	return a - (((c - d) * (a - b)) / (c - e))
+    return a - (((c - d) * (a - b)) / (c - e))
 
 
 #### The formula to calculate k_closed_cone factor
 def cal_k_closed_cone(bw_open):
-	return (1 + (bw_open - 1) * 1.032) / bw_open
+    return (1 + (bw_open - 1) * 1.032) / bw_open
 
 
 # def extrapolation(x_nk, y_nk, x_hvl, y_hvl, target_hvl):
