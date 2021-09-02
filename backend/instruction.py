@@ -1,17 +1,11 @@
 # -*- coding:UTF-8 -*-
 
 from flask import Flask, jsonify, request
-import random, string, pyodbc
-
-
-def get32():
-    return "".join(random.sample(string.ascii_letters + string.digits, 32))
-
+import pyodbc
 
 app = Flask(__name__)
 app.config["JSON_AS_ASCII"] = False
 app.config["SECRET_KEY"] = "123456"
-
 
 # read me
 """
@@ -25,12 +19,11 @@ def xxx_function(arg1, arg2):
     return XXX
 我去找这两个值传进去
 
-
 这里是一个例子，比如说我们要根据field_test001 和 field_test002去计算并且填入 field_test003
 计算公式为：field_test003 = (field_test001 + field_test002) * 2
 我在下面的下面写了一个 cal_Nk_test(arg1, arg2)，可供参考
 table name: dbo.test001_by_redback
- 
+
 field_test001   field_test002   field_test003
 1.0             2.0             Null
 11.0            22.0            Null
@@ -43,7 +36,9 @@ after table
 [(1.0, 2.0, 6.0), (11.0, 22.0, 66.0), (111.0, 222.0, 666.0)]
 
 """
-# START finish the formula #############################################################################################
+
+
+# START finish the formula ############################################################
 
 # all the calculation functions
 def cal_Nk_test(arg1, arg2):
@@ -57,12 +52,9 @@ def cal_Nk_test(arg1, arg2):
     """
     result = (arg1 + arg2) * 2
     return result
+# END finish the formula ##############################################################
 
-
-# END finish the formula ###############################################################################################
-
-
-# START Grizz Huang part, you may ignore ###############################################################################
+# START Grizz Huang part, you may ignore ##############################################
 
 # test
 conn = pyodbc.connect(
@@ -80,7 +72,6 @@ current_table = cursor.execute("SELECT * FROM" + " dbo.test001_by_redback").fetc
 print("before table")
 print(current_table)
 
-
 for rowNum, content in enumerate(current_table):
     cursor.execute(
         "UPDATE dbo.test001_by_redback SET "
@@ -97,7 +88,9 @@ current_table = cursor.execute("SELECT * FROM" + " dbo.test001_by_redback").fetc
 
 print("after table")
 print(current_table)
+
 # END test
+
 
 # front end interfaces
 @app.route("/")
@@ -109,10 +102,8 @@ def index():
 
     return jsonify(status=1)
 
-
-# END Grizz Huang part, you may ignore #################################################################################
+# END Grizz Huang part, you may ignore ##############################################
 
 
 if __name__ == "__main__":
-
     app.run(debug=True, threaded=True, port=5001, host="127.0.0.1")
