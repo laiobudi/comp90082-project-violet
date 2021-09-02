@@ -1,9 +1,11 @@
 from interpolation import interpolation
 
+
 import pyodbc
 
 # TODO: collect input data from DB?
 # input data from the `identification` sheet
+
 BEAMS = [
     {"beam_id": "Filter1", "kvp": 60, "hvl_measured_al": 1.268, "hvl_measured_cu": None},
     {"beam_id": "Filter2", "kvp": 80, "hvl_measured_al": 2.321, "hvl_measured_cu": None},
@@ -12,8 +14,7 @@ BEAMS = [
     {"beam_id": "Filter5", "kvp": 150, "hvl_measured_al": None, "hvl_measured_cu": 0.339},
     {"beam_id": "Filter6", "kvp": 180, "hvl_measured_al": None, "hvl_measured_cu": 0.504},
     {"beam_id": "Filter7", "kvp": 200, "hvl_measured_al": None, "hvl_measured_cu": 1.042},
-    {"beam_id": "Filter8", "kvp": 250, "hvl_measured_al": None, "hvl_measured_cu": 2.117}
-]
+    {"beam_id": "Filter8", "kvp": 250, "hvl_measured_al": None, "hvl_measured_cu": 2.117}]
 
 CHAMBER_SN_FARMER = ["3587", "5447", "5448"]
 CHAMBER_SN_PP = ["1508", "858"]
@@ -37,6 +38,7 @@ def cal_nk_value(beams):
 
     # Loop through each input beam
     for beam in beams:
+
         # Initialize result list
         result_list = []
 
@@ -93,7 +95,6 @@ def cal_nk_value(beams):
 
         # TODO: Insert results into database
         storeIntoDb()
-
         # DEBUG
         # print(result_list)
         # print("----------------------")
@@ -103,6 +104,7 @@ def cal_nk_value(beams):
 ###########################
 #### Helper functions #####
 ###########################
+<<<<<<< HEAD
 '''
 
 def check_HVL_Al_Cu(input):
@@ -205,15 +207,15 @@ def select_from_farmer(cursor, kvp, hvl, type):
     return first_beam, second_beam
 
 # DB query: Look up plain parallel type table
+
 def selectDbPP(cursor, kvp, hvl, type="al"):
     # TODO: SELECT ...
-
     return "first", "second"
+
 
 # DB query: Store data into Db
 def storeIntoDb():
     #TODO: INSERT ...
-
     return 0
 
 
