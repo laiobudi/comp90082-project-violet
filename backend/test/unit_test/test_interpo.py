@@ -103,10 +103,8 @@ REF_BEAMS4 = [
     },
 ]
 
-# Unit tests
+
 # test case: [Farmer] only get hvl_al without hvl_cu (interpolation)
-
-
 def test_interpo1():
     ans = interpolation(
         REF_BEAMS[0]["nk_3587"],
