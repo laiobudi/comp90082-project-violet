@@ -218,6 +218,6 @@ def storeIntoDb():
     #TODO: INSERT ...
     return 0
 
-
-if __name__ == "__main__":
-    cal_nk_value(BEAMS)
+# DEBUG
+# if __name__ == "__main__":
+#     cal_nk_value(BEAMS)
