@@ -117,8 +117,7 @@ def cal_nk_value(beams):
                     beam["hvl_measured_cu"],
                 )
                 # Average the results
-                result = {"id": beam["beam_id"],
-                          "nk_" + chamber: (nk_al + nk_cu) / 2}
+                result = {"id": beam["beam_id"], "nk_" + chamber: (nk_al + nk_cu) / 2}
                 result_list.append(result)
 
         # Only HVL_Al
@@ -221,11 +220,7 @@ def select_from_farmer(cursor, kvp, hvl, type):
         for k, v in first_lower_beam.items():
             if k != "id":
                 lower_beam[k] = interpolation(
-                    first_lower_beam[k],
-                    first_upper_beam[k],
-                    lower_kvp,
-                    upper_kvp,
-                    kvp
+                    first_lower_beam[k], first_upper_beam[k], lower_kvp, upper_kvp, kvp
                 )
                 upper_beam[k] = interpolation(
                     second_lower_beam[k],
@@ -305,8 +300,7 @@ def select_from_farmer(cursor, kvp, hvl, type):
             "SELECT hvl_measured_mm_{} FROM beam_farmer_list "
             "WHERE beam_farmer_id='{}'".format(type, upper_beam["id"])
         ).fetchone()
-        lower_beam["hvl_" + type], upper_beam["hvl_" + type] = \
-            lower_hvl, upper_hvl
+        lower_beam["hvl_" + type], upper_beam["hvl_" + type] = lower_hvl, upper_hvl
 
         return lower_beam, upper_beam
 
@@ -366,8 +360,7 @@ def select_from_farmer(cursor, kvp, hvl, type):
         "SELECT hvl_measured_mm_{} FROM beam_farmer_list "
         "WHERE beam_farmer_id='{}'".format(type, second_beam["id"])
     ).fetchone()
-    first_beam["hvl_" + type], second_beam["hvl_" + type] = \
-        first_hvl, second_hvl
+    first_beam["hvl_" + type], second_beam["hvl_" + type] = first_hvl, second_hvl
 
     return first_beam, second_beam
 

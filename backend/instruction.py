@@ -70,8 +70,7 @@ conn = pyodbc.connect(
 )
 
 cursor = conn.cursor()
-current_table = cursor.execute("SELECT * FROM" +
-                               " dbo.test001_by_redback").fetchall()
+current_table = cursor.execute("SELECT * FROM" + " dbo.test001_by_redback").fetchall()
 
 print("before table")
 print(current_table)
@@ -88,8 +87,7 @@ for rowNum, content in enumerate(current_table):
 # 存档
 # cursor.commit()
 
-current_table = cursor.execute("SELECT * FROM" +
-                               " dbo.test001_by_redback").fetchall()
+current_table = cursor.execute("SELECT * FROM" + " dbo.test001_by_redback").fetchall()
 
 print("after table")
 print(current_table)
