@@ -1,6 +1,6 @@
 # -*- coding:UTF-8 -*-
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 import pyodbc
 
 app = Flask(__name__)
@@ -38,14 +38,15 @@ after table
 """
 
 
-# START finish the formula ############################################################
+# START finish the formula #
 
 # all the calculation functions
 def cal_Nk_test(arg1, arg2):
     # 下面这个打三个"，敲回车，可以自动出来
     """
-    :param arg1: arg1 is the Beam ID from No.X table // No.X refers to the excel file (send you later),
-                                                        which has tag number for each green block
+    :param arg1: arg1 is the Beam ID from No.X table
+    // No.X refers to the excel file (send you later),
+    which has tag number for each green block
 
     :param arg2: arg2 is the nk_value from No.X table
     :return: the value to be stored to database
@@ -54,9 +55,9 @@ def cal_Nk_test(arg1, arg2):
     return result
 
 
-# END finish the formula ##############################################################
+# END finish the formula #
 
-# START Grizz Huang part, you may ignore ##############################################
+# START Grizz Huang part, you may ignore #
 
 # test
 conn = pyodbc.connect(
@@ -69,7 +70,8 @@ conn = pyodbc.connect(
 )
 
 cursor = conn.cursor()
-current_table = cursor.execute("SELECT * FROM" + " dbo.test001_by_redback").fetchall()
+current_table = cursor.execute("SELECT * FROM" +
+                               " dbo.test001_by_redback").fetchall()
 
 print("before table")
 print(current_table)
@@ -86,7 +88,8 @@ for rowNum, content in enumerate(current_table):
 # 存档
 # cursor.commit()
 
-current_table = cursor.execute("SELECT * FROM" + " dbo.test001_by_redback").fetchall()
+current_table = cursor.execute("SELECT * FROM" +
+                               " dbo.test001_by_redback").fetchall()
 
 print("after table")
 print(current_table)
@@ -105,7 +108,7 @@ def index():
     return jsonify(status=1)
 
 
-# END Grizz Huang part, you may ignore ##############################################
+# END Grizz Huang part, you may ignore #
 
 
 if __name__ == "__main__":

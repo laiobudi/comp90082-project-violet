@@ -1,6 +1,5 @@
 from interpolation import interpolation
 
-
 import pyodbc
 
 # TODO: collect input data from DB?
@@ -118,7 +117,10 @@ def cal_nk_value(beams):
                     beam["hvl_measured_cu"],
                 )
                 # Average the results
-                result = {"id": beam["beam_id"], "nk_" + chamber: (nk_al + nk_cu) / 2}
+                result = {
+                    "id": beam["beam_id"],
+                    "nk_" + chamber: (nk_al + nk_cu) / 2
+                }
                 result_list.append(result)
 
         # Only HVL_Al
@@ -201,12 +203,12 @@ def select_from_farmer(cursor, kvp, hvl, type):
         "SELECT * FROM beam_farmer_list WHERE kV={}".format(kvp)
     ).fetchall():
         (lower_kvp,) = cursor.execute(
-            "SELECT TOP 1 kV FROM beam_farmer_list WHERE kV<={} ORDER BY kV DESC".format(
-                kvp
-            )
+            "SELECT TOP 1 kV FROM beam_farmer_list "
+            "WHERE kV<={} ORDER BY kV DESC".format(kvp)
         ).fetchone()
         (upper_kvp,) = cursor.execute(
-            "SELECT TOP 1 kV FROM beam_farmer_list WHERE kV>={} ORDER BY kV".format(kvp)
+            "SELECT TOP 1 kV FROM beam_farmer_list "
+            "WHERE kV>={} ORDER BY kV".format(kvp)
         ).fetchone()
         first_lower_beam, second_lower_beam = select_from_farmer(
             cursor, lower_kvp, hvl, type
@@ -221,7 +223,11 @@ def select_from_farmer(cursor, kvp, hvl, type):
         for k, v in first_lower_beam.items():
             if k != "id":
                 lower_beam[k] = interpolation(
-                    first_lower_beam[k], first_upper_beam[k], lower_kvp, upper_kvp, kvp
+                    first_lower_beam[k],
+                    first_upper_beam[k],
+                    lower_kvp,
+                    upper_kvp,
+                    kvp
                 )
                 upper_beam[k] = interpolation(
                     second_lower_beam[k],
@@ -230,18 +236,24 @@ def select_from_farmer(cursor, kvp, hvl, type):
                     upper_kvp,
                     kvp,
                 )
-                # lower_beam[k] = interpolation(first_lower_beam[k], second_lower_beam[k], first_lower_beam["hvl_cu"], second_lower_beam["hvl_cu"], hvl)
-                # upper_beam[k] = interpolation(first_upper_beam[k], second_upper_beam[k], first_upper_beam["hvl_cu"], second_upper_beam["hvl_cu"], hvl)
+                # lower_beam[k] = interpolation(first_lower_beam[k],
+                # second_lower_beam[k], first_lower_beam["hvl_cu"],
+                # second_lower_beam["hvl_cu"], hvl)
+                # upper_beam[k] = interpolation(first_upper_beam[k],
+                # second_upper_beam[k], first_upper_beam["hvl_cu"],
+                # second_upper_beam["hvl_cu"], hvl)
 
         return lower_beam, upper_beam
 
     lower_check = cursor.execute(
-        "SELECT * FROM beam_farmer_list WHERE hvl_measured_mm_{}<={} AND kV={}".format(
+        "SELECT * FROM beam_farmer_list "
+        "WHERE hvl_measured_mm_{}<={} AND kV={}".format(
             type, hvl, kvp
         )
     ).fetchall()
     upper_check = cursor.execute(
-        "SELECT * FROM beam_farmer_list WHERE hvl_measured_mm_{}>={} AND kV={}".format(
+        "SELECT * FROM beam_farmer_list "
+        "WHERE hvl_measured_mm_{}>={} AND kV={}".format(
             type, hvl, kvp
         )
     ).fetchall()
@@ -292,16 +304,19 @@ def select_from_farmer(cursor, kvp, hvl, type):
 
         # Extract HVL
         (lower_hvl,) = cursor.execute(
-            "SELECT hvl_measured_mm_{} FROM beam_farmer_list WHERE beam_farmer_id='{}'".format(
+            "SELECT hvl_measured_mm_{} FROM beam_farmer_list "
+            "WHERE beam_farmer_id='{}'".format(
                 type, lower_beam["id"]
             )
         ).fetchone()
         (upper_hvl,) = cursor.execute(
-            "SELECT hvl_measured_mm_{} FROM beam_farmer_list WHERE beam_farmer_id='{}'".format(
+            "SELECT hvl_measured_mm_{} FROM beam_farmer_list "
+            "WHERE beam_farmer_id='{}'".format(
                 type, upper_beam["id"]
             )
         ).fetchone()
-        lower_beam["hvl_" + type], upper_beam["hvl_" + type] = lower_hvl, upper_hvl
+        lower_beam["hvl_" + type], upper_beam["hvl_" + type] = \
+            lower_hvl, upper_hvl
 
         return lower_beam, upper_beam
 
@@ -354,16 +369,19 @@ def select_from_farmer(cursor, kvp, hvl, type):
 
     # Extract HVL
     (first_hvl,) = cursor.execute(
-        "SELECT hvl_measured_mm_{} FROM beam_farmer_list WHERE beam_farmer_id='{}'".format(
+        "SELECT hvl_measured_mm_{} FROM beam_farmer_list "
+        "WHERE beam_farmer_id='{}'".format(
             type, first_beam["id"]
         )
     ).fetchone()
     (second_hvl,) = cursor.execute(
-        "SELECT hvl_measured_mm_{} FROM beam_farmer_list WHERE beam_farmer_id='{}'".format(
+        "SELECT hvl_measured_mm_{} FROM beam_farmer_list "
+        "WHERE beam_farmer_id='{}'".format(
             type, second_beam["id"]
         )
     ).fetchone()
-    first_beam["hvl_" + type], second_beam["hvl_" + type] = first_hvl, second_hvl
+    first_beam["hvl_" + type], second_beam["hvl_" + type] = \
+        first_hvl, second_hvl
 
     return first_beam, second_beam
 
