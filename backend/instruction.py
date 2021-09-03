@@ -52,6 +52,8 @@ def cal_Nk_test(arg1, arg2):
     """
     result = (arg1 + arg2) * 2
     return result
+
+
 # END finish the formula ##############################################################
 
 # START Grizz Huang part, you may ignore ##############################################
@@ -101,6 +103,7 @@ def index():
         print(i)
 
     return jsonify(status=1)
+
 
 # END Grizz Huang part, you may ignore ##############################################
 
