@@ -4,7 +4,7 @@ import math
 
 # TODO: improve the issue of import module
 
-from interpolation import interpolation
+from backend.utility.interpolation import interpolation
 
 
 BEAMS = [
