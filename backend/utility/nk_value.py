@@ -66,19 +66,8 @@ CHAMBER_SN_PP = ["1508", "858"]
 """
 
 def cal_nk_value(beams):
-
-    # connect to database
-    connection = pyodbc.connect(
-        "Driver={ODBC Driver 17 for SQL Server};"
-        "Server=34.126.203.116,1433;"
-        "Database=violet_main;"
-        "Uid=SA;"
-        "PWD=ProjViolet!1;"
-        "Trusted_Connection=no;"
-    )
-    # Create cursor object
-    cursor = connection.cursor()
-
+    # Connect to database
+    cursor = connect_to_db()
     # Loop through each input beam
     for beam in beams:
 
@@ -173,7 +162,8 @@ def cal_nk_value(beams):
         # print(result_list)
         # print("----------------------")
 
-        return result_list  # for testing
+        # For testing
+        return result_list
 
 
 """
@@ -183,11 +173,43 @@ def cal_nk_value(beams):
 <<<<<<< HEAD
 """
 
+def connect_to_db():
+    # connect to database
+    connection = pyodbc.connect(
+        "Driver={ODBC Driver 17 for SQL Server};"
+        "Server=34.126.203.116,1433;"
+        "Database=violet_main;"
+        "Uid=SA;"
+        "PWD=ProjViolet!1;"
+        "Trusted_Connection=no;"
+    )
+    # Create cursor object
+    return connection.cursor()
+
+
+def select_input_from_db(cursor):
+    beams = []
+    input_table = cursor.execute('SELECT beam_id, '
+                                 'nom_energy, '
+                                 'hvl_measured_mm_al, '
+                                 'hvl_measured_mm_cu '
+                                 'FROM beam_data')
+    for key, value in enumerate(input_table):
+        beam = {"beam_id": (value)[0],
+                "kvp": (value)[1],
+                "hvl_measured_al": (value)[2],
+                "hvl_measured_cu": (value)[3]}
+        beams.append(beam)
+    # DEBUG
+    # print(beams)
+    return beams
+
+
 def check_HVL_Al_Cu(input):
     HVL_type = {"Al": False, "Cu": False}
-    if input["hvl_measured_al"] is not None:
+    if input["hvl_measured_al"] != 0:
         HVL_type["Al"] = True
-    if input["hvl_measured_cu"] is not None:
+    if input["hvl_measured_cu"] != 0:
         HVL_type["Cu"] = True
 
     return HVL_type
@@ -388,4 +410,9 @@ def storeIntoDb():
 
 # DEBUG
 # if __name__ == "__main__":
-#     cal_nk_value(BEAMS)
+    # cursor = connect_to_db()
+    #
+    # # Retrieve input data
+    # beams = select_input_from_db(cursor)
+    #
+    # cal_nk_value(beams)

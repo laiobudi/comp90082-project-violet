@@ -1,13 +1,14 @@
 from backend.utility.nk_value import cal_nk_value
 import pytest, math
 
+# Later on, cal_nk_value won't return result list, instead stores into db
 # basic interpolation (mm Al)
 @pytest.mark.parametrize("beams, chambers, expected_nk", [
 	([{
 		"beam_id": "Filter1",
 		"kvp": 60,
 		"hvl_measured_al": 1.268,
-		"hvl_measured_cu": None,
+		"hvl_measured_cu": 0,
 	}], ["3587", "5447", "5448"], [48.46063655710431, 49.3166175139252, 50.1855243241834])
 ])
 def test_cal_nk_value1(beams, chambers, expected_nk):
@@ -21,7 +22,7 @@ def test_cal_nk_value1(beams, chambers, expected_nk):
 	([{
 		"beam_id": "Filter7",
 		"kvp": 200,
-		"hvl_measured_al": None,
+		"hvl_measured_al": 0,
 		"hvl_measured_cu": 1.042,
 	}], ["3587", "5447", "5448"], [48.0483942095272, 47.8738855378819, 48.2376105400211])
 ])
@@ -54,7 +55,7 @@ def test_cal_nk_value3(beams, chambers, expected_nk):
 		"beam_id": "Filter10",
 		"kvp": 120,
 		"hvl_measured_al": 5.123,
-		"hvl_measured_cu": None,
+		"hvl_measured_cu": 0,
 	}], ["3587", "5447", "5448"], [47.6925270623713, 47.8698211443177, 48.5336598022952])
 ])
 def test_cal_nk_value4(beams, chambers, expected_nk):
@@ -69,7 +70,7 @@ def test_cal_nk_value4(beams, chambers, expected_nk):
 	([{
 		"beam_id": "Filter5",
 		"kvp": 150,
-		"hvl_measured_al": None,
+		"hvl_measured_al": 0,
 		"hvl_measured_cu": 0.339,
 	}], ["3587", "5447", "5448"], [47.7766767345878, 47.7964424644076, 48.3922090028646])
 ])
