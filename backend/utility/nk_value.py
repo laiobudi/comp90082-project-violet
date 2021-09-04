@@ -5,57 +5,6 @@ import pyodbc
 # TODO: collect input data from DB?
 # input data from the `identification` sheet
 
-BEAMS = [
-    {
-        "beam_id": "Filter1",
-        "kvp": 60,
-        "hvl_measured_al": 1.268,
-        "hvl_measured_cu": None,
-    },
-    {
-        "beam_id": "Filter2",
-        "kvp": 80,
-        "hvl_measured_al": 2.321,
-        "hvl_measured_cu": None,
-    },
-    {
-        "beam_id": "Filter3",
-        "kvp": 100,
-        "hvl_measured_al": 2.881,
-        "hvl_measured_cu": None,
-    },
-    {
-        "beam_id": "Filter4",
-        "kvp": 120,
-        "hvl_measured_al": 5.123,
-        "hvl_measured_cu": 0.227,
-    },
-    {
-        "beam_id": "Filter5",
-        "kvp": 150,
-        "hvl_measured_al": None,
-        "hvl_measured_cu": 0.339,
-    },
-    {
-        "beam_id": "Filter6",
-        "kvp": 180,
-        "hvl_measured_al": None,
-        "hvl_measured_cu": 0.504,
-    },
-    {
-        "beam_id": "Filter7",
-        "kvp": 200,
-        "hvl_measured_al": None,
-        "hvl_measured_cu": 1.042,
-    },
-    {
-        "beam_id": "Filter8",
-        "kvp": 250,
-        "hvl_measured_al": None,
-        "hvl_measured_cu": 2.117,
-    },
-]
-
 CHAMBER_SN_FARMER = ["3587", "5447", "5448"]
 CHAMBER_SN_PP = ["1508", "858"]
 
