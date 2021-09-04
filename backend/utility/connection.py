@@ -57,13 +57,16 @@ def getMurhoTable(connection, type):
         return err
 
 currentLength = len(getMurhoTable(DB_connect(), "al"))
+print(currentLength)
 
-try:
-    connection = DB_connect()
-    for arow in al_table:
-        currentLength = len(getMurhoTable(DB_connect(), "al"))
-        connection.execute("INSERT INTO murho_al(murho_al_id, hvl_al, murho, date_updated) values (?, ?, ?, ?)",
-                           (currentLength + 1, arow["hvl_al"], arow["murho"], datetime.datetime.now()))
-    connection.commit()
-except Exception as e:
-    print(e)
+#This part is for inserting data to murho_al/murho_cu only
+# try:
+#     connection = DB_connect()
+#     for arow in al_table:
+#         print(arow)
+#         currentLength = len(getMurhoTable(DB_connect(), "al"))
+#         connection.execute("INSERT INTO murho_al(murho_al_id, hvl_al, murho, date_updated) values (?, ?, ?, ?)",
+#                            (currentLength + 1, arow["hvl_al"], arow["murho"], datetime.datetime.now()))
+#         connection.commit()
+# except Exception as e:
+#     print(e)
