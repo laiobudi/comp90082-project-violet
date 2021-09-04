@@ -2,9 +2,6 @@ from backend.utility.interpolation import interpolation
 
 import pyodbc
 
-# TODO: collect input data from DB?
-# input data from the `identification` sheet
-
 CHAMBER_SN_FARMER = ["3587", "5447", "5448"]
 CHAMBER_SN_PP = ["1508", "858"]
 
@@ -44,14 +41,14 @@ def cal_nk_value(beams):
                     second_beam_al["nk_" + chamber],
                     first_beam_al["hvl_al"],
                     second_beam_al["hvl_al"],
-                    beam["hvl_measured_al"],
+                    beam["hvl_measured_al"]
                 )
                 nk_cu = interpolation(
                     first_beam_cu["nk_" + chamber],
                     second_beam_cu["nk_" + chamber],
                     first_beam_cu["hvl_cu"],
                     second_beam_cu["hvl_cu"],
-                    beam["hvl_measured_cu"],
+                    beam["hvl_measured_cu"]
                 )
                 # Average the results
                 result = {"id": beam["beam_id"],
@@ -73,8 +70,8 @@ def cal_nk_value(beams):
                         second_beam["nk_" + chamber],
                         first_beam["hvl_al"],
                         second_beam["hvl_al"],
-                        beam["hvl_measured_al"],
-                    ),
+                        beam["hvl_measured_al"]
+                    )
                 }
                 result_list.append(result)
 
@@ -93,8 +90,8 @@ def cal_nk_value(beams):
                         second_beam["nk_" + chamber],
                         first_beam["hvl_cu"],
                         second_beam["hvl_cu"],
-                        beam["hvl_measured_cu"],
-                    ),
+                        beam["hvl_measured_cu"]
+                    )
                 }
                 result_list.append(result)
 
@@ -103,7 +100,19 @@ def cal_nk_value(beams):
             first_beam, second_beam = selectDbPP(
                 cursor, beam["kvp"], beam["hvl_measured_al"]
             )
-            # TODO: Interpolation
+            for chamber in CHAMBER_SN_PP:
+                result = {
+                    "id": beam["beam_id"],
+                    "nk_"
+                    + chamber: interpolation(
+                        first_beam["nk_" + chamber],
+                        second_beam["nk_" + chamber],
+                        first_beam["hvl_al"],
+                        second_beam["hvl_al"],
+                        beam["hvl_measured_al"]
+                    )
+                }
+                result_list.append(result)
 
         # TODO: Insert results into database
         storeIntoDb()
@@ -111,7 +120,7 @@ def cal_nk_value(beams):
         # print(result_list)
         # print("----------------------")
 
-        # For testing
+        #### ONLY FOR TESTING
         return result_list
 
 
@@ -119,7 +128,6 @@ def cal_nk_value(beams):
 ###########################
 #### Helper functions #####
 ###########################
-<<<<<<< HEAD
 """
 
 def connect_to_db():
@@ -343,12 +351,64 @@ def select_from_farmer(cursor, kvp, hvl, type):
     return first_beam, second_beam
 
 
-# DB query: Look up plain parallel type table
-
-
+# Select 2 closest beams from PlaneParallel-Type-Chamber table
 def selectDbPP(cursor, kvp, hvl, type="al"):
-    # TODO: SELECT ...
-    return "first", "second"
+    # TODO: Scenario that hvl is smaller than 0.1122?
+    lower_table = cursor.execute(
+        "SELECT beam_planeparallel_id, chamber_SN, nk_value FROM "
+        + "beam_planeparallel_chamber "
+        + "WHERE "
+        + "beam_planeparallel_id "
+        + "IN "
+        + "( SELECT TOP 1 "
+        + "beam_planeparallel_id "
+        + "FROM "
+        + "beam_planeparallel_list "
+        + "WHERE "
+        + "hvl_measured_mm_{}<={} ".format(type, hvl)
+        + "ORDER BY "
+        + "hvl_measured_mm_{} ".format(type)
+        + "DESC)"
+    ).fetchall()
+    upper_table = cursor.execute(
+        "SELECT beam_planeparallel_id, chamber_SN, nk_value FROM "
+        + "beam_planeparallel_chamber "
+        + "WHERE "
+        + "beam_planeparallel_id "
+        + "IN "
+        + "( SELECT TOP 1 "
+        + "beam_planeparallel_id "
+        + "FROM "
+        + "beam_planeparallel_list "
+        + "WHERE "
+        + "hvl_measured_mm_{}>={} ".format(type, hvl)
+        + "ORDER BY "
+        + "hvl_measured_mm_{} ".format(type)
+        + "ASC)"
+    ).fetchall()
+    lower_beam, upper_beam = {}, {}
+    # TODO: REFACTOR
+    # Extract NK from each Chamber_SN
+    for beam_id, chamber_SN, nk in lower_table:
+        lower_beam["id"] = beam_id
+        lower_beam["nk_" + chamber_SN] = nk
+    for beam_id, chamber_SN, nk in upper_table:
+        upper_beam["id"] = beam_id
+        upper_beam["nk_" + chamber_SN] = nk
+
+    # Extract HVL
+    (lower_hvl,) = cursor.execute(
+        "SELECT hvl_measured_mm_{} FROM beam_planeparallel_list "
+        "WHERE beam_planeparallel_id='{}'".format(type, lower_beam["id"])
+    ).fetchone()
+    (upper_hvl,) = cursor.execute(
+        "SELECT hvl_measured_mm_{} FROM beam_planeparallel_list "
+        "WHERE beam_planeparallel_id='{}'".format(type, upper_beam["id"])
+    ).fetchone()
+    lower_beam["hvl_" + type], upper_beam["hvl_" + type] = \
+        lower_hvl, upper_hvl
+
+    return lower_beam, upper_beam
 
 
 # DB query: Store data into Db
@@ -359,9 +419,9 @@ def storeIntoDb():
 
 # DEBUG
 # if __name__ == "__main__":
-    # cursor = connect_to_db()
-    #
-    # # Retrieve input data
-    # beams = select_input_from_db(cursor)
-    #
-    # cal_nk_value(beams)
+#     cursor = connect_to_db()
+#
+#     # Retrieve input data
+#     beams = select_input_from_db(cursor)
+#
+#     cal_nk_value(beams)
