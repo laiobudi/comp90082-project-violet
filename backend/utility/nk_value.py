@@ -1,4 +1,4 @@
-from interpolation import interpolation
+from backend.utility.interpolation import interpolation
 
 import pyodbc
 
@@ -64,7 +64,6 @@ CHAMBER_SN_PP = ["1508", "858"]
 #### Main Calculation #####
 ###########################
 """
-
 
 def cal_nk_value(beams):
 
@@ -174,6 +173,8 @@ def cal_nk_value(beams):
         # print(result_list)
         # print("----------------------")
 
+        return result_list  # for testing
+
 
 """
 ###########################
@@ -181,7 +182,6 @@ def cal_nk_value(beams):
 ###########################
 <<<<<<< HEAD
 """
-
 
 def check_HVL_Al_Cu(input):
     HVL_type = {"Al": False, "Cu": False}
