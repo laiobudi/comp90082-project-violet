@@ -109,3 +109,8 @@ def test_cal_nk_value5(beams, chambers, expected_nk):
 
     for i in range(len(result)):
         assert math.isclose(result[i]["nk_" + chambers[i]], expected_nk[i])
+
+
+# Database connection error
+# Data read failure
+# Data write failure
