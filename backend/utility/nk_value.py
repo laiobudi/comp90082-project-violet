@@ -97,7 +97,7 @@ def cal_nk_value(beams):
 
         # Check Plane-Parallel-Type
         if HVL_type["Al"] and beam["hvl_measured_al"] <= 2.204:
-            first_beam, second_beam = selectDbPP(
+            first_beam, second_beam = select_from_planeparallel(
                 cursor, beam["kvp"], beam["hvl_measured_al"]
             )
             for chamber in CHAMBER_SN_PP:
@@ -120,9 +120,6 @@ def cal_nk_value(beams):
         # print(result_list)
         # print("----------------------")
 
-        #### ONLY FOR TESTING
-        return result_list
-
 
 """
 ###########################
@@ -131,17 +128,21 @@ def cal_nk_value(beams):
 """
 
 def connect_to_db():
-    # connect to database
-    connection = pyodbc.connect(
-        "Driver={ODBC Driver 17 for SQL Server};"
-        "Server=34.126.203.116,1433;"
-        "Database=violet_main;"
-        "Uid=SA;"
-        "PWD=ProjViolet!1;"
-        "Trusted_Connection=no;"
-    )
-    # Create cursor object
-    return connection.cursor()
+    try:
+        # connect to database
+        connection = pyodbc.connect(
+            "Driver={ODBC Driver 17 for SQL Server};"
+            "Server=34.126.203.116,1433;"
+            "Database=violet_main;"
+            "Uid=SA;"
+            "PWD=ProjViolet!1;"
+            "Trusted_Connection=no;"
+        )
+        # Create cursor object
+        return connection.cursor()
+
+    except pyodbc.Error as ex:
+        raise Exception(ex.args[1])
 
 
 def select_input_from_db(cursor):
@@ -222,6 +223,7 @@ def select_from_farmer(cursor, kvp, hvl, type):
 
         return lower_beam, upper_beam
 
+    # Kvp is bound in the table
     lower_check = cursor.execute(
         "SELECT * FROM beam_farmer_list "
         "WHERE hvl_measured_mm_{}<={} AND kV={}".format(type, hvl, kvp)
@@ -352,7 +354,7 @@ def select_from_farmer(cursor, kvp, hvl, type):
 
 
 # Select 2 closest beams from PlaneParallel-Type-Chamber table
-def selectDbPP(cursor, kvp, hvl, type="al"):
+def select_from_planeparallel(cursor, kvp, hvl, type="al"):
     # TODO: Scenario that hvl is smaller than 0.1122?
     lower_table = cursor.execute(
         "SELECT beam_planeparallel_id, chamber_SN, nk_value FROM "

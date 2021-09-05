@@ -4,8 +4,8 @@ This file is for calculating murho
 """
 import operator
 from itertools import islice
-from interpolation import interpolation
-from connection import DB_connect
+from backend.utility.interpolation import interpolation
+from backend.utility.connection import DB_connect
 connection = DB_connect()
 
 def getMurhoTable(connection, type):
