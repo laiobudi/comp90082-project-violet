@@ -176,54 +176,17 @@ def check_HVL_Al_Cu(input):
 # Select 2 closest beams from Farmer-Type-Chamber table
 def select_from_farmer(cursor, kvp, hvl, type):
 
-    # Kvp not be bound in the table
+    # Kvp not be bound in the existed kvp
     if not cursor.execute(
         "SELECT * FROM beam_farmer_list WHERE kV={}".format(kvp)
     ).fetchall():
-        (lower_kvp,) = cursor.execute(
-            "SELECT TOP 1 kV FROM beam_farmer_list "
-            "WHERE kV<={} ORDER BY kV DESC".format(kvp)
-        ).fetchone()
-        (upper_kvp,) = cursor.execute(
-            "SELECT TOP 1 kV FROM beam_farmer_list "
-            "WHERE kV>={} ORDER BY kV".format(kvp)
-        ).fetchone()
-        first_lower_beam, second_lower_beam = select_from_farmer(
-            cursor, lower_kvp, hvl, type
-        )
-        first_upper_beam, second_upper_beam = select_from_farmer(
-            cursor, upper_kvp, hvl, type
-        )
+        (closest_kvp,) = cursor.execute('SELECT kV FROM beam_farmer_list '
+                                'WHERE ABS(kV - {})>=0 '
+                                'ORDER BY ABS(kV - {})'
+                                .format(kvp, kvp)).fetchone()
+        kvp = int(closest_kvp)
 
-        lower_beam, upper_beam = {
-            "id": first_lower_beam["id"] + "+" + first_upper_beam["id"]
-        }, {"id": second_lower_beam["id"] + "+" + second_upper_beam["id"]}
-        for k, v in first_lower_beam.items():
-            if k != "id":
-                lower_beam[k] = interpolation(
-                    first_lower_beam[k],
-                    first_upper_beam[k],
-                    lower_kvp,
-                    upper_kvp,
-                    kvp
-                )
-                upper_beam[k] = interpolation(
-                    second_lower_beam[k],
-                    second_upper_beam[k],
-                    lower_kvp,
-                    upper_kvp,
-                    kvp,
-                )
-                # lower_beam[k] = interpolation(first_lower_beam[k],
-                # second_lower_beam[k], first_lower_beam["hvl_cu"],
-                # second_lower_beam["hvl_cu"], hvl)
-                # upper_beam[k] = interpolation(first_upper_beam[k],
-                # second_upper_beam[k], first_upper_beam["hvl_cu"],
-                # second_upper_beam["hvl_cu"], hvl)
-
-        return lower_beam, upper_beam
-
-    # Kvp is bound in the table
+    # Kvp is bound
     lower_check = cursor.execute(
         "SELECT * FROM beam_farmer_list "
         "WHERE hvl_measured_mm_{}<={} AND kV={}".format(type, hvl, kvp)
