@@ -117,8 +117,8 @@ def cal_nk_value(beams):
         # TODO: Insert results into database
         storeIntoDb()
         # DEBUG
-        # print(result_list)
-        # print("----------------------")
+        print(result_list)
+        print("----------------------")
 
 
 """
@@ -319,59 +319,57 @@ def select_from_farmer(cursor, kvp, hvl, type):
 # Select 2 closest beams from PlaneParallel-Type-Chamber table
 def select_from_planeparallel(cursor, kvp, hvl, type="al"):
     # TODO: Scenario that hvl is smaller than 0.1122?
-    lower_table = cursor.execute(
-        "SELECT beam_planeparallel_id, chamber_SN, nk_value FROM "
-        + "beam_planeparallel_chamber "
-        + "WHERE "
-        + "beam_planeparallel_id "
-        + "IN "
-        + "( SELECT TOP 1 "
-        + "beam_planeparallel_id "
-        + "FROM "
-        + "beam_planeparallel_list "
-        + "WHERE "
-        + "hvl_measured_mm_{}<={} ".format(type, hvl)
-        + "ORDER BY "
-        + "hvl_measured_mm_{} ".format(type)
-        + "DESC)"
-    ).fetchall()
-    upper_table = cursor.execute(
-        "SELECT beam_planeparallel_id, chamber_SN, nk_value FROM "
-        + "beam_planeparallel_chamber "
-        + "WHERE "
-        + "beam_planeparallel_id "
-        + "IN "
-        + "( SELECT TOP 1 "
-        + "beam_planeparallel_id "
-        + "FROM "
-        + "beam_planeparallel_list "
-        + "WHERE "
-        + "hvl_measured_mm_{}>={} ".format(type, hvl)
-        + "ORDER BY "
-        + "hvl_measured_mm_{} ".format(type)
-        + "ASC)"
-    ).fetchall()
+    lower_table = cursor.execute("SELECT TOP 2 "
+                                 "beam_pp_chamber_id, "
+                                 "a.beam_planeparallel_id, "
+                                 "chamber_SN, "
+                                 "hvl_measured_mm_al "
+                                 "FROM "
+                                 "beam_planeparallel_chamber as a "
+                                 "LEFT JOIN "
+                                 "beam_planeparallel_list as b "
+                                 "ON a.beam_planeparallel_id"
+                                 "=b.beam_planeparallel_id "
+                                 "WHERE "
+                                 "hvl_measured_mm_al <={} ".format(hvl)+
+                                 "ORDER BY "
+                                 "hvl_measured_mm_al "
+                                 "DESC").fetchall()
+    upper_table = cursor.execute("SELECT TOP 2 "
+                                 "beam_pp_chamber_id, "
+                                 "a.beam_planeparallel_id, "
+                                 "chamber_SN, "
+                                 "hvl_measured_mm_al "
+                                 "FROM "
+                                 "beam_planeparallel_chamber as a "
+                                 "LEFT JOIN "
+                                 "beam_planeparallel_list as b "
+                                 "ON a.beam_planeparallel_id"
+                                 "=b.beam_planeparallel_id "
+                                 "WHERE "
+                                 "hvl_measured_mm_al >={} ".format(hvl)+
+                                 "ORDER BY "
+                                 "hvl_measured_mm_al").fetchall()
+
     lower_beam, upper_beam = {}, {}
     # TODO: REFACTOR
-    # Extract NK from each Chamber_SN
-    for beam_id, chamber_SN, nk in lower_table:
+    # Extract value from results
+    for beam_chamber_id, beam_id, chamber_SN, ref_hvl in lower_table:
+        (lower_nk,) = cursor.execute(
+            "SELECT nk_value FROM beam_planeparallel_nk "
+            "WHERE beam_pp_chamber_id='{}'".format(beam_chamber_id)
+        ).fetchone()
         lower_beam["id"] = beam_id
-        lower_beam["nk_" + chamber_SN] = nk
-    for beam_id, chamber_SN, nk in upper_table:
+        lower_beam["hvl_al"] = ref_hvl
+        lower_beam["nk_" + chamber_SN] = lower_nk
+    for beam_chamber_id, beam_id, chamber_SN, ref_hvl in upper_table:
+        (upper_nk,) = cursor.execute(
+            "SELECT nk_value FROM beam_planeparallel_nk "
+            "WHERE beam_pp_chamber_id='{}'".format(beam_chamber_id)
+        ).fetchone()
         upper_beam["id"] = beam_id
-        upper_beam["nk_" + chamber_SN] = nk
-
-    # Extract HVL
-    (lower_hvl,) = cursor.execute(
-        "SELECT hvl_measured_mm_{} FROM beam_planeparallel_list "
-        "WHERE beam_planeparallel_id='{}'".format(type, lower_beam["id"])
-    ).fetchone()
-    (upper_hvl,) = cursor.execute(
-        "SELECT hvl_measured_mm_{} FROM beam_planeparallel_list "
-        "WHERE beam_planeparallel_id='{}'".format(type, upper_beam["id"])
-    ).fetchone()
-    lower_beam["hvl_" + type], upper_beam["hvl_" + type] = \
-        lower_hvl, upper_hvl
+        upper_beam["hvl_al"] = ref_hvl
+        upper_beam["nk_" + chamber_SN] = upper_nk
 
     return lower_beam, upper_beam
 
@@ -383,10 +381,10 @@ def storeIntoDb():
 
 
 # DEBUG
-# if __name__ == "__main__":
-#     cursor = connect_to_db()
-#
-#     # Retrieve input data
-#     beams = select_input_from_db(cursor)
-#
-#     cal_nk_value(beams)
+if __name__ == "__main__":
+    cursor = connect_to_db()
+
+    # Retrieve input data
+    beams = select_input_from_db(cursor)
+
+    cal_nk_value(beams)
