@@ -210,8 +210,8 @@ def select_from_farmer(cursor, kvp, hvl, type):
         "SELECT * FROM beam_farmer_list WHERE kV={}".format(kvp)
     ).fetchall():
         (closest_kvp,) = cursor.execute('SELECT kV FROM beam_farmer_list '
-                                'WHERE ABS(kV - {})>=0 '
-                                'ORDER BY ABS(kV - {})'
+                                'WHERE (kV - {})>=0 '
+                                'ORDER BY (kV - {})'
                                 .format(kvp, kvp)).fetchone()
         kvp = int(closest_kvp)
 
@@ -415,5 +415,11 @@ if __name__ == "__main__":
 
     # Retrieve input data
     beams = select_input_from_db(cursor)
+    # SpringfieldElementary examples
+    # beams = [{'beam_id': 'BEAM_FILTER1', 'kvp': 30.0, 'hvl_measured_al': 0.19, 'hvl_measured_cu': 0.0},
+    #          {'beam_id': 'BEAM_FILTER2', 'kvp': 50.0, 'hvl_measured_al': 0.81, 'hvl_measured_cu': 0.0},
+    #          {'beam_id': 'BEAM_FILTER3', 'kvp': 80.0, 'hvl_measured_al': 2.01, 'hvl_measured_cu': 0.0},
+    #          {'beam_id': 'BEAM_FILTER4', 'kvp': 95.0, 'hvl_measured_al': 2.61, 'hvl_measured_cu': 0.0},
+    #          {'beam_id': 'BEAM_FILTER5', 'kvp': 100.0, 'hvl_measured_al': 4.02, 'hvl_measured_cu': 0.0}]
 
     cal_nk_value(beams)

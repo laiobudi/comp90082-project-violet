@@ -21,10 +21,11 @@ CHAMBER_PP = ["nk_1508", "nk_858"]
 	  'nk_5448': 50.1275799997309})
 ])
 def test_nk0(beam, chambers, expected_1, expected_2):
-	first, second = select_from_farmer(cursor, beam["kvp"], beam["hvl_measured_al"], "al")
+	first, second, warn = select_from_farmer(cursor, beam["kvp"], beam["hvl_measured_al"], "al")
 	for chamber in chambers:
 		assert math.isclose(first[chamber], expected_1[chamber])
 		assert math.isclose(second[chamber], expected_2[chamber])
+		assert warn
 
 
 # selection from lookup table (mm Al) (PP) (0.8060<x<1.3040)
@@ -61,10 +62,11 @@ def test_nk1(beam, chambers, expected_1, expected_2):
 	  'nk_5448': 48.2306178975952})
 ])
 def test_nk2(beam, chambers, expected_1, expected_2):
-	first, second = select_from_farmer(cursor, beam["kvp"], beam["hvl_measured_cu"], "cu")
+	first, second, warn = select_from_farmer(cursor, beam["kvp"], beam["hvl_measured_cu"], "cu")
 	for chamber in chambers:
 		assert math.isclose(first[chamber], expected_1[chamber])
 		assert math.isclose(second[chamber], expected_2[chamber])
+		assert warn
 
 
 # selection from lookup table (mm Al) (Farmer) (x<5.556<6.377)
@@ -82,10 +84,11 @@ def test_nk2(beam, chambers, expected_1, expected_2):
 	  'nk_5448': 48.4969968164535})
 ])
 def test_nk3(beam, chambers, expected_1, expected_2):
-	first, second = select_from_farmer(cursor, beam["kvp"], beam["hvl_measured_al"], "al")
+	first, second, warn = select_from_farmer(cursor, beam["kvp"], beam["hvl_measured_al"], "al")
 	for chamber in chambers:
 		assert math.isclose(first[chamber], expected_1[chamber])
 		assert math.isclose(second[chamber], expected_2[chamber])
+		assert not warn
 
 
 # selection from lookup table (mm Al) (Farmer) (7.588<10.31<x)
@@ -103,10 +106,11 @@ def test_nk3(beam, chambers, expected_1, expected_2):
 	  'nk_5448': 48.2155357397939})
 ])
 def test_nk4(beam, chambers, expected_1, expected_2):
-	first, second = select_from_farmer(cursor, beam["kvp"], beam["hvl_measured_al"], "al")
+	first, second, warn = select_from_farmer(cursor, beam["kvp"], beam["hvl_measured_al"], "al")
 	for chamber in chambers:
 		assert math.isclose(first[chamber], expected_2[chamber])
 		assert math.isclose(second[chamber], expected_1[chamber])
+		assert not warn
 
 
 # selection from lookup table (mm Cu) (Farmer) (x<0.379<0.493)
@@ -124,10 +128,11 @@ def test_nk4(beam, chambers, expected_1, expected_2):
 	  'nk_5448': 48.3541292859397})
 ])
 def test_nk5(beam, chambers, expected_1, expected_2):
-	first, second = select_from_farmer(cursor, beam["kvp"], beam["hvl_measured_cu"], "cu")
+	first, second, warn = select_from_farmer(cursor, beam["kvp"], beam["hvl_measured_cu"], "cu")
 	for chamber in chambers:
 		assert math.isclose(first[chamber], expected_1[chamber])
 		assert math.isclose(second[chamber], expected_2[chamber])
+		assert not warn
 
 
 # selection from lookup table (mm Cu) (Farmer) (1.125<1.383<x)
@@ -145,10 +150,11 @@ def test_nk5(beam, chambers, expected_1, expected_2):
 	  'nk_5448': 47.8193210966529})
 ])
 def test_nk5(beam, chambers, expected_1, expected_2):
-	first, second = select_from_farmer(cursor, beam["kvp"], beam["hvl_measured_cu"], "cu")
+	first, second, warn = select_from_farmer(cursor, beam["kvp"], beam["hvl_measured_cu"], "cu")
 	for chamber in chambers:
 		assert math.isclose(first[chamber], expected_2[chamber])
 		assert math.isclose(second[chamber], expected_1[chamber])
+		assert not warn
 
 
 # Database connection error
