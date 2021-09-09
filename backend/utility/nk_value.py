@@ -14,6 +14,8 @@ CHAMBER_SN_PP = ["1508", "858"]
 def cal_nk_value(beams):
     # Connect to database
     cursor = connect_to_db()
+    # Initialize warn_msg_list
+    warn_msg_list = []
     # Loop through each input beam
     for beam in beams:
 
@@ -28,12 +30,24 @@ def cal_nk_value(beams):
 
         # Both HVL_Al and HVL_Cu exist
         if HVL_type["Al"] and HVL_type["Cu"]:
-            first_beam_al, second_beam_al = select_from_farmer(
+            first_beam_al, second_beam_al, warn_status_al = select_from_farmer(
                 cursor, beam["kvp"], beam["hvl_measured_al"], "al"
             )
-            first_beam_cu, second_beam_cu = select_from_farmer(
+            first_beam_cu, second_beam_cu, warn_status_cu = select_from_farmer(
                 cursor, beam["kvp"], beam["hvl_measured_cu"], "cu"
             )
+            # Warning message
+            if not warn_status_al:
+                warn_msg = {}
+                warn_msg["beam_id"] = beam["beam_id"]
+                warn_msg["message"] = "Extrapolation_Nk_Al"
+                warn_msg_list.append(warn_msg)
+
+            if not warn_status_cu:
+                warn_msg = {}
+                warn_msg["beam_id"] = beam["beam_id"]
+                warn_msg["message"] = "Extrapolation_Nk_Cu"
+                warn_msg_list.append(warn_msg)
 
             for chamber in CHAMBER_SN_FARMER:
                 nk_al = interpolation(
@@ -57,9 +71,15 @@ def cal_nk_value(beams):
 
         # Only HVL_Al
         elif HVL_type["Al"]:
-            first_beam, second_beam = select_from_farmer(
+            first_beam, second_beam, warn_status_al = select_from_farmer(
                 cursor, beam["kvp"], beam["hvl_measured_al"], "al"
             )
+            # Warning message
+            if not warn_status_al:
+                warn_msg = {}
+                warn_msg["beam_id"] = beam["beam_id"]
+                warn_msg["message"] = "Extrapolation_Nk_Al"
+                warn_msg_list.append(warn_msg)
 
             for chamber in CHAMBER_SN_FARMER:
                 result = {
@@ -77,9 +97,15 @@ def cal_nk_value(beams):
 
         # Only HVL_Cu
         elif HVL_type["Cu"]:
-            first_beam, second_beam = select_from_farmer(
+            first_beam, second_beam, warn_status_cu = select_from_farmer(
                 cursor, beam["kvp"], beam["hvl_measured_cu"], "cu"
             )
+            # Warning message
+            if not warn_status_cu:
+                warn_msg = {}
+                warn_msg["beam_id"] = beam["beam_id"]
+                warn_msg["message"] = "Extrapolation_Nk_Cu"
+                warn_msg_list.append(warn_msg)
 
             for chamber in CHAMBER_SN_FARMER:
                 result = {
@@ -119,6 +145,9 @@ def cal_nk_value(beams):
         # DEBUG
         print(result_list)
         print("----------------------")
+
+    # DEBUG
+    print(warn_msg_list)
 
 
 """
@@ -252,7 +281,7 @@ def select_from_farmer(cursor, kvp, hvl, type):
         lower_beam["hvl_" + type], upper_beam["hvl_" + type] = \
             lower_hvl, upper_hvl
 
-        return lower_beam, upper_beam
+        return lower_beam, upper_beam, True
 
     # HVL not in the scope (EXTRAPOLATION)
     first_beam, second_beam, extrap_table = {}, {}, []
@@ -313,7 +342,7 @@ def select_from_farmer(cursor, kvp, hvl, type):
     first_beam["hvl_" + type], second_beam["hvl_" + type] = \
         first_hvl, second_hvl
 
-    return first_beam, second_beam
+    return first_beam, second_beam, False
 
 
 # Select 2 closest beams from PlaneParallel-Type-Chamber table
