@@ -174,13 +174,15 @@ def connect_to_db():
         raise Exception(ex.args[1])
 
 
-def select_input_from_db(cursor):
+def select_input_from_db(cursor, audit_id):
     beams = []
-    input_table = cursor.execute('SELECT beam_id, '
-                                 'nom_energy, '
-                                 'hvl_measured_mm_al, '
-                                 'hvl_measured_mm_cu '
-                                 'FROM beam_data')
+    input_beams_table = cursor.execute('SELECT beam_id, '
+                                + 'nom_energy, '
+                                + 'hvl_measured_mm_al, '
+                                + 'hvl_measured_mm_cu '
+                                + 'FROM beam_data'
+                                + 'WHERE beam_id LIKE '
+                                + str(audit_id) + '%')
     for key, value in enumerate(input_table):
         beam = {"beam_id": (value)[0],
                 "kvp": (value)[1],
