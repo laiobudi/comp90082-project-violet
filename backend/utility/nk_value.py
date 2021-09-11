@@ -180,10 +180,11 @@ def select_input_from_db(cursor, audit_id):
                                 + 'nom_energy, '
                                 + 'hvl_measured_mm_al, '
                                 + 'hvl_measured_mm_cu '
-                                + 'FROM beam_data'
-                                + 'WHERE beam_id LIKE '
-                                + str(audit_id) + '%')
-    for key, value in enumerate(input_table):
+                                + "FROM beam_data "
+                                + "WHERE beam_id "
+                                + "LIKE '{}%'".format(audit_id)
+                                       ).fetchall()
+    for key, value in enumerate(input_beams_table):
         beam = {"beam_id": (value)[0],
                 "kvp": (value)[1],
                 "hvl_measured_al": (value)[2],
@@ -416,7 +417,7 @@ if __name__ == "__main__":
     cursor = connect_to_db()
 
     # Retrieve input data
-    beams = select_input_from_db(cursor)
+    beams = select_input_from_db(cursor, "BEAM")
     # SpringfieldElementary examples
     # beams = [{'beam_id': 'BEAM_FILTER1', 'kvp': 30.0, 'hvl_measured_al': 0.19, 'hvl_measured_cu': 0.0},
     #          {'beam_id': 'BEAM_FILTER2', 'kvp': 50.0, 'hvl_measured_al': 0.81, 'hvl_measured_cu': 0.0},
