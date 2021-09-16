@@ -5,22 +5,22 @@ import pyodbc
 CHAMBER_SN_FARMER = ["3587", "5447", "5448"]
 CHAMBER_SN_PP = ["1508", "858"]
 
-"""
+
 ###########################
 #### Main Calculation #####
 ###########################
-"""
 
+'''
+Main function for calculating NK
+@:param beams: a list of dictionaries
+'''
 def cal_nk_value(beams):
     # Connect to database
     cursor = connect_to_db()
-    # Initialize warn_msg_list
-    warn_msg_list = []
+    # Initialize result_list, warn_msg_list
+    result_list, warn_msg_list = [], []
     # Loop through each input beam
     for beam in beams:
-
-        # Initialize result list
-        result_list = []
 
         # CHECK if it's Al or Cu or Both
         HVL_type = check_HVL_Al_Cu(beam)
@@ -30,10 +30,12 @@ def cal_nk_value(beams):
 
         # Both HVL_Al and HVL_Cu exist
         if HVL_type["Al"] and HVL_type["Cu"]:
-            first_beam_al, second_beam_al, warn_status_al = select_from_farmer(
+            first_beam_al, second_beam_al, warn_status_al = \
+                select_from_farmer(
                 cursor, beam["kvp"], beam["hvl_measured_al"], "al"
             )
-            first_beam_cu, second_beam_cu, warn_status_cu = select_from_farmer(
+            first_beam_cu, second_beam_cu, warn_status_cu = \
+                select_from_farmer(
                 cursor, beam["kvp"], beam["hvl_measured_cu"], "cu"
             )
             # Warning message
@@ -66,12 +68,13 @@ def cal_nk_value(beams):
                 )
                 # Average the results
                 result = {"id": beam["beam_id"],
-                          "nk_" + chamber: (nk_al + nk_cu) / 2}
+                          chamber: (nk_al + nk_cu) / 2}
                 result_list.append(result)
 
         # Only HVL_Al
         elif HVL_type["Al"]:
-            first_beam, second_beam, warn_status_al = select_from_farmer(
+            first_beam, second_beam, warn_status_al = \
+                select_from_farmer(
                 cursor, beam["kvp"], beam["hvl_measured_al"], "al"
             )
             # Warning message
@@ -84,8 +87,7 @@ def cal_nk_value(beams):
             for chamber in CHAMBER_SN_FARMER:
                 result = {
                     "id": beam["beam_id"],
-                    "nk_"
-                    + chamber: interpolation(
+                    chamber: interpolation(
                         first_beam["nk_" + chamber],
                         second_beam["nk_" + chamber],
                         first_beam["hvl_al"],
@@ -110,8 +112,7 @@ def cal_nk_value(beams):
             for chamber in CHAMBER_SN_FARMER:
                 result = {
                     "id": beam["beam_id"],
-                    "nk_"
-                    + chamber: interpolation(
+                    chamber: interpolation(
                         first_beam["nk_" + chamber],
                         second_beam["nk_" + chamber],
                         first_beam["hvl_cu"],
@@ -129,8 +130,7 @@ def cal_nk_value(beams):
             for chamber in CHAMBER_SN_PP:
                 result = {
                     "id": beam["beam_id"],
-                    "nk_"
-                    + chamber: interpolation(
+                    chamber: interpolation(
                         first_beam["nk_" + chamber],
                         second_beam["nk_" + chamber],
                         first_beam["hvl_al"],
@@ -140,14 +140,13 @@ def cal_nk_value(beams):
                 }
                 result_list.append(result)
 
-        # TODO: Insert results into database
-        storeIntoDb()
         # DEBUG
-        print(result_list)
-        print("----------------------")
+        # print(beam_result_list)
+        # print("----------------------")
 
     # DEBUG
-    print(warn_msg_list)
+    # print(warn_msg_list)
+    return result_list, warn_msg_list
 
 
 """
@@ -156,9 +155,12 @@ def cal_nk_value(beams):
 ###########################
 """
 
+'''
+connect to the database
+@:return cursor object
+'''
 def connect_to_db():
     try:
-        # connect to database
         connection = pyodbc.connect(
             "Driver={ODBC Driver 17 for SQL Server};"
             "Server=34.126.203.116,1433;"
@@ -174,8 +176,14 @@ def connect_to_db():
         raise Exception(ex.args[1])
 
 
+'''
+select the data from db based on the audit_id
+@:param cursor: Object, a cursor object
+@:param audit_id: string, the audit_id that you want to search
+@:return beams: list, the data of beams
+'''
 def select_input_from_db(cursor, audit_id):
-    beams = []
+    beams, cones = [], []
     input_beams_table = cursor.execute('SELECT beam_id, '
                                 + 'nom_energy, '
                                 + 'hvl_measured_mm_al, '
@@ -190,11 +198,35 @@ def select_input_from_db(cursor, audit_id):
                 "hvl_measured_al": (value)[2],
                 "hvl_measured_cu": (value)[3]}
         beams.append(beam)
+
+    input_cones_table = cursor.execute('SELECT cone_id, ssd, '
+                                       + "CASE WHEN shape = 'circular' "
+                                         "THEN field_diameter "
+                                       + "	WHEN shape = 'square' "
+                                         "THEN 2*SQRT(field_area/PI()) "
+                                       + "	WHEN shape = 'rectangular' "
+                                         "THEN 2*SQRT(field_dimension_1*"
+                                         "field_dimension_2/PI()) "
+                                       + "END AS diameter "
+                                       + "FROM cone "
+                                       + "WHERE cone_id "
+                                       + "LIKE '{}%'".format(audit_id)
+                                       ).fetchall()
+    for key, value in enumerate(input_cones_table):
+        cone = {"cone_id": (value)[0],
+                "SSD": (value)[1],
+                "diameter": (value)[2]}
+        cones.append(cone)
     # DEBUG
     # print(beams)
-    return beams
+    return beams, cones
 
 
+'''
+Check the type of HVL
+@:param input: dictionary, the data of a beam
+@:return HVL_type: dictionary, hvl type
+'''
 def check_HVL_Al_Cu(input):
     HVL_type = {"Al": False, "Cu": False}
     if input["hvl_measured_al"] != 0:
@@ -205,7 +237,16 @@ def check_HVL_Al_Cu(input):
     return HVL_type
 
 
-# Select 2 closest beams from Farmer-Type-Chamber table
+'''
+Select 2 closest beams from Farmer-Type-Chamber table
+@:param cursor: Object, a cursor object
+@:param kvp: float, kvp value
+@:param hvl: float, hvl value
+@:param type: string, the type of hvl (al or cu)
+@:return first_beam: the lower boundary 
+@:return second_beam: the upper boundary
+@:return boolean, extrap or not
+'''
 def select_from_farmer(cursor, kvp, hvl, type):
 
     # Kvp not be bound in the existed kvp
@@ -348,9 +389,16 @@ def select_from_farmer(cursor, kvp, hvl, type):
     return first_beam, second_beam, False
 
 
-# Select 2 closest beams from PlaneParallel-Type-Chamber table
+'''
+Select 2 closest beams from PlaneParallel-Type-Chamber table
+@:param cursor: Object, a cursor object
+@:param kvp: float, kvp value
+@:param hvl: float, hvl value
+@:param type: string, the type of hvl (default: al) 
+@:return lower_beam: the lower boundary 
+@:return upper_beam: the upper boundary
+'''
 def select_from_planeparallel(cursor, kvp, hvl, type="al"):
-    # TODO: Scenario that hvl is smaller than 0.1122?
     lower_table = cursor.execute("SELECT TOP 2 "
                                  "beam_pp_chamber_id, "
                                  "a.beam_planeparallel_id, "
@@ -404,25 +452,3 @@ def select_from_planeparallel(cursor, kvp, hvl, type="al"):
         upper_beam["nk_" + chamber_SN] = upper_nk
 
     return lower_beam, upper_beam
-
-
-# DB query: Store data into Db
-def storeIntoDb():
-    # TODO: INSERT ...
-    return 0
-
-
-# DEBUG
-if __name__ == "__main__":
-    cursor = connect_to_db()
-
-    # Retrieve input data
-    beams = select_input_from_db(cursor, "BEAM")
-    # SpringfieldElementary examples
-    # beams = [{'beam_id': 'BEAM_FILTER1', 'kvp': 30.0, 'hvl_measured_al': 0.19, 'hvl_measured_cu': 0.0},
-    #          {'beam_id': 'BEAM_FILTER2', 'kvp': 50.0, 'hvl_measured_al': 0.81, 'hvl_measured_cu': 0.0},
-    #          {'beam_id': 'BEAM_FILTER3', 'kvp': 80.0, 'hvl_measured_al': 2.01, 'hvl_measured_cu': 0.0},
-    #          {'beam_id': 'BEAM_FILTER4', 'kvp': 95.0, 'hvl_measured_al': 2.61, 'hvl_measured_cu': 0.0},
-    #          {'beam_id': 'BEAM_FILTER5', 'kvp': 100.0, 'hvl_measured_al': 4.02, 'hvl_measured_cu': 0.0}]
-
-    cal_nk_value(beams)
