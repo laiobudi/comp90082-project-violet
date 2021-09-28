@@ -229,9 +229,9 @@ Check the type of HVL
 '''
 def check_HVL_Al_Cu(input):
     HVL_type = {"Al": False, "Cu": False}
-    if input["hvl_measured_al"] != 0:
+    if input["hvl_measured_al"]:
         HVL_type["Al"] = True
-    if input["hvl_measured_cu"] != 0:
+    if input["hvl_measured_cu"]:
         HVL_type["Cu"] = True
 
     return HVL_type
