@@ -32,7 +32,7 @@ hvl_cu_axis = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1, 1.5, 2, 3, 4, 5]
 ###########################
 #### Main Calculation #####
 ###########################
-def cal_Bw_value(beams: list, cones: list):
+def cal_Bw_value(cursor, beams, cones):
     # get beams and cones input values from database.
     # beams, cones = get_input_value()
 
@@ -50,14 +50,14 @@ def cal_Bw_value(beams: list, cones: list):
 
             # both Al and Cu exist, need to calculate average value
             bw_res = []
-            
+
             if hvl_type["Al"]:
-                al_res = calculation(cone["SSD"], cone["diameter"], beam["hvl_measured_al"], "Al")
+                al_res = calculation(cursor, cone["SSD"], cone["diameter"], beam["hvl_measured_al"], "Al")
                 bw_res.append(al_res)
                 print('beam: ' + str(beam) + ', cone: ' + str(cone) + 'Al: ', str(al_res))
                 # storeIntoDb(table_name, Al_column_name, al_res)
             if hvl_type["Cu"]:
-                cu_res = calculation(cone["SSD"], cone["diameter"], beam["hvl_measured_cu"], "Cu")
+                cu_res = calculation(cursor, cone["SSD"], cone["diameter"], beam["hvl_measured_cu"], "Cu")
                 bw_res.append(cu_res)
                 print("beam: " + str(beam) + ", cone: " + str(cone) + 'Cu: ', str(cu_res))
                 # storeIntoDb(table_name, Cu_column_name, cu_res)
@@ -65,7 +65,7 @@ def cal_Bw_value(beams: list, cones: list):
             # storeIntoDb(table_name, Combined_column_name, sum(bw_res) / len(bw_res))
             print("beam: " + str(beam) + ", cone: " + str(cone) + 'Combined: ', str(sum(bw_res) / len(bw_res)))
 
-def calculation(ssd: float, diameter: float, hvl: float, type: str):
+def calculation(cursor, ssd: float, diameter: float, hvl: float, type: str):
     if type == "Al":
         ssd_axis = ssd_al_axis
         hvl_axis = hvl_al_axis
@@ -82,7 +82,7 @@ def calculation(ssd: float, diameter: float, hvl: float, type: str):
     ssd_list = check_exist(ssd, ssd_axis)
     hvl_list = check_exist(hvl, hvl_axis)
     diameter_list = check_exist(diameter, diameter_axis)
-    
+
     # ssd_len = len(ssd_list)
     # hvl_len = len(hvl_list)
     # diameter_len = len(diameter_list)
@@ -90,10 +90,10 @@ def calculation(ssd: float, diameter: float, hvl: float, type: str):
     # 如果全部能匹配上，直接查询返回。
     # if (len(ssd_list) == 1 and len(diameter_list) == 1 and len(hvl_list) == 1):
     #     return select_from_DB(ssd_list[0], diameter_list[0], hvl_list[0], type)
-    
+
     if (ssd_list[0] == ssd_list[1] and diameter_list[0] == diameter_list[1] and hvl_list[0] == hvl_list[1]):
-        return select_from_DB(ssd_list[0], hvl_list[0], diameter_list[0], type)
-    
+        return select_from_DB(cursor, ssd_list[0], hvl_list[0], diameter_list[0], type)
+
     # 至少一个匹配不上，建立3D数组存值。
     required_values = np.zeros((len(ssd_list), len(hvl_list), len(diameter_list)))
 
@@ -102,7 +102,7 @@ def calculation(ssd: float, diameter: float, hvl: float, type: str):
         for j in range(len(hvl_list)):
             for k in range(len(diameter_list)):
                 # print((i,j,k))
-                required_values[i, j, k] = select_from_DB(ssd_list[i], hvl_list[j], diameter_list[k], type)
+                required_values[i, j, k] = select_from_DB(cursor, ssd_list[i], hvl_list[j], diameter_list[k], type)
 
     hvl1 = interpolation(required_values[0,0,0], required_values[0,1,0], hvl_list[0], hvl_list[1], hvl)
     hvl2 = interpolation(required_values[0,0,1], required_values[0,1,1], hvl_list[0], hvl_list[1], hvl)
@@ -192,9 +192,9 @@ def check_exist(target, axis):
 
 
 
-def select_from_DB(ssd: float, hvl: float, diameter: float, type: str):
+def select_from_DB(cursor, ssd, hvl, diameter, type):
     #SQL query.
-    
+
     bw_lookup_value = cursor.execute("SELECT bw "
                                 + "FROM bw_al_cu "
                                 + "WHERE type = '{}' ".format(type)

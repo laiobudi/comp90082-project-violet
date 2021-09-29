@@ -1,4 +1,5 @@
 from backend.utility.nk_value import cal_nk_value, connect_to_db, select_input_from_db
+from backend.utility.Bw_value import cal_Bw_value
 
 CHAMBER_SN_FARMER = ["3587", "5447", "5448"]
 CHAMBER_SN_PP = ["1508", "858"]
@@ -18,6 +19,7 @@ def start_calculate(audit_id):
 	nk_res, nk_warn = cal_nk_value(beams)
 
 	#### calculate BW
+	# cal_Bw_value(cursor, beams, cones)
 
 	#### calculate Mu
 
@@ -103,4 +105,4 @@ def convert_result_from_nk(input_id, nk, chamber_SN):
 
 # DEBUG
 if __name__ == "__main__":
-	start_calculate("ACDS-kV-4000")
+	start_calculate("ACDS-kV-5014")
