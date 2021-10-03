@@ -6,11 +6,20 @@ import operator
 from itertools import islice
 from backend.utility.interpolation import interpolation
 from backend.utility.connection import DB_connect
-connection = DB_connect()
 
-def getMurhoTable(connection, type):
+
+def getMurhoTable(type):
+    connection = DB_connect()
     try:
-        query = "SELECT * FROM murho_{} ".format(type)
+        (latest_date,) = connection.execute("SELECT TOP 1 date_updated "
+                                        "FROM murho_{} "
+                                        "ORDER BY date_updated "
+                                        "DESC").format(type).fetchone()
+        latest_date = latest_date.strftime('%Y-%m-%d')
+
+
+
+        query = "SELECT * FROM murho_{} AND date_updated={}".format(type, latest_date)
         cursor = connection.execute(query)
 
         columns = [column[0] for column in connection.description]
@@ -25,18 +34,14 @@ def getMurhoTable(connection, type):
         return err
 
 
-
-print(getMurhoTable(connection, "al"))
-
-
 """
 This function is to convert dict to list and get first N elements
 @Parameter Type: int, dictItem
 @Output Type: List[tuple]
 @Output Example: [(hvl1,murho), (hvl2,murho)...] e.g.[(0.1,1.020), (0.2,1.028)...]
 """
-def first_N_dictitems(n, dictItem):
-    return list(islice(dictItem, n))
+def ChangeToTuples(the_dict):
+    return list(the_dict.items())
 
 """
 Noting special, just used to sort the dict by Key and return a dict
@@ -47,18 +52,18 @@ def sort_dict_by_key_ascending(sorting_dict):
 
 """
 This function is to get the hvl list for Cu/Al from look up table, it return a sorted dict by key(i.e. hvl)
-@Parameter Type: String
-@Parameter Example: ["first_hvl_al", "first_hvl_cu"]
+@Parameter Type: String, list[dict]
+@Parameter Example: ["first_hvl_al", "first_hvl_cu"], [dict1, dict2]
 @Output Type: Dict
 @Output Example: {hvl1:murho, hvl2:murho...} e.g {0.1:1.020, 0.2:1.028, 0.3:1.035...} for first_hvl_cu
 """
 
-# def get_first_hvl(hvl_type):
-#     result = {}
-#     for row in murho_table:
-#         if row[hvl_type] is not None:
-#             result[row[hvl_type]] = row["murho"]
-#     return sort_dict_by_key_ascending(result)
+def get_first_hvl(hvl_type, look_up_table):
+    result = {}
+    for row in look_up_table:
+        if row[hvl_type] is not None:
+            result[row[hvl_type]] = row["murho"]
+    return sort_dict_by_key_ascending(result)
 
 """
 This function is to get the murho result for Cu/Al from look up table, it return a Float number
@@ -69,8 +74,7 @@ This function is to get the murho result for Cu/Al from look up table, it return
 """
 def cal_murho(beam_measured, hvl_type):
     hvls = getMurhoTable(hvl_type)
-    hvls_list = first_N_dictitems(len(hvls), hvls.items())
-
+    hvls_list = ChangeToTuples(get_first_hvl("hvl_"+hvl_type, hvls))
     # if hvl matched look up table, just return the murho
     for row in hvls_list:
         if beam_measured == row[0]:
@@ -119,15 +123,15 @@ This function is to add the murho to the dict and return the updated dict
     'murho': 1.076756} 
 ,{...},...]
 """
-def add_murho(beams_sample):
-    temp = beams_sample
+def add_murho(beams):
+    temp = beams
     for beam in temp:
         al_murho, cu_murho = None, None
         if beam["hvl_measured_al"] is not None:
-            al_murho = cal_murho(beam["hvl_measured_al"], "hvl_al")
+            al_murho = cal_murho(beam["hvl_measured_al"], "al")
 
         if beam["hvl_measured_cu"] is not None:
-            cu_murho = cal_murho(beam["hvl_measured_cu"], "hvl_cu")
+            cu_murho = cal_murho(beam["hvl_measured_cu"], "cu")
 
         beam["al_murho"], beam["cu_murho"] = al_murho, cu_murho
         if isinstance(al_murho, str) or isinstance(cu_murho, str):
