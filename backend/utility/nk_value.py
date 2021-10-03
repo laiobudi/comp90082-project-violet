@@ -1,6 +1,5 @@
 from backend.utility.interpolation import interpolation
 
-import pyodbc
 
 CHAMBER_SN_FARMER = ["3587", "5447", "5448"]
 CHAMBER_SN_PP = ["1508", "858"]
@@ -180,6 +179,13 @@ Select 2 closest beams from Farmer-Type-Chamber table
 '''
 def select_from_farmer(cursor, kvp, hvl, type):
 
+    # retrieve latest lookup table
+    (latest_date,) = cursor.execute("SELECT TOP 1 date_updated "
+                                    "FROM beam_farmer_chamber "
+                                    "ORDER BY date_updated "
+                                    "DESC").fetchone()
+    latest_date = latest_date.strftime('%Y-%m-%d')
+
     # Kvp not be bound in the existed kvp
     if not cursor.execute(
         "SELECT * FROM beam_farmer_list WHERE kV={}".format(kvp)
@@ -216,7 +222,8 @@ def select_from_farmer(cursor, kvp, hvl, type):
             + "hvl_measured_mm_{}<={} AND kV={} ".format(type, hvl, kvp)
             + "ORDER BY "
             + "hvl_measured_mm_{} ".format(type)
-            + "DESC)"
+            + "DESC) "
+            + "AND date_updated='{}'".format(latest_date)
         ).fetchall()
         upper_table = cursor.execute(
             "SELECT beam_farmer_id, chamber_SN, nk_value FROM "
@@ -232,7 +239,8 @@ def select_from_farmer(cursor, kvp, hvl, type):
             + "hvl_measured_mm_{}>={} AND kV={} ".format(type, hvl, kvp)
             + "ORDER BY "
             + "hvl_measured_mm_{} ".format(type)
-            + "ASC)"
+            + "ASC) "
+            + "AND date_updated='{}'".format(latest_date)
         ).fetchall()
         lower_beam, upper_beam = {}, {}
         # TODO: REFACTOR
@@ -272,7 +280,8 @@ def select_from_farmer(cursor, kvp, hvl, type):
             + "WHERE "
             + "hvl_measured_mm_{}>={} AND kV={} ".format(type, hvl, kvp)
             + "ORDER BY "
-            + "hvl_measured_mm_{})".format(type)
+            + "hvl_measured_mm_{}) ".format(type)
+            + "AND date_updated='{}'".format(latest_date)
         ).fetchall()
         (first_beam["id"], _, _), (second_beam["id"], _, _) = (
             extrap_table[0],
@@ -290,7 +299,8 @@ def select_from_farmer(cursor, kvp, hvl, type):
             + "WHERE "
             + "hvl_measured_mm_{}<={} AND kV={} ".format(type, hvl, kvp)
             + "ORDER BY "
-            + "hvl_measured_mm_{} DESC)".format(type)
+            + "hvl_measured_mm_{} DESC) ".format(type)
+            + "AND date_updated='{}'".format(latest_date)
         ).fetchall()
 
         (first_beam["id"], _, _), (second_beam["id"], _, _) = (
@@ -363,12 +373,20 @@ def select_from_planeparallel(cursor, kvp, hvl, type="al"):
                                  "hvl_measured_mm_al").fetchall()
 
     lower_beam, upper_beam = {}, {}
+    # retrieve the latest lookup table
+    (latest_date,) = cursor.execute("SELECT TOP 1 date_updated "
+                                 "FROM beam_planeparallel_nk "
+                                 "ORDER BY date_updated "
+                                 "DESC").fetchone()
+    latest_date = latest_date.strftime('%Y-%m-%d')
+
     # TODO: REFACTOR
     # Extract value from results
     for beam_chamber_id, beam_id, chamber_SN, ref_hvl in lower_table:
         (lower_nk,) = cursor.execute(
             "SELECT nk_value FROM beam_planeparallel_nk "
-            "WHERE beam_pp_chamber_id='{}'".format(beam_chamber_id)
+            "WHERE beam_pp_chamber_id='{}' ".format(beam_chamber_id)+
+            "AND date_updated='{}'".format(latest_date)
         ).fetchone()
         lower_beam["id"] = beam_id
         lower_beam["hvl_al"] = ref_hvl
@@ -376,7 +394,8 @@ def select_from_planeparallel(cursor, kvp, hvl, type="al"):
     for beam_chamber_id, beam_id, chamber_SN, ref_hvl in upper_table:
         (upper_nk,) = cursor.execute(
             "SELECT nk_value FROM beam_planeparallel_nk "
-            "WHERE beam_pp_chamber_id='{}'".format(beam_chamber_id)
+            "WHERE beam_pp_chamber_id='{}' ".format(beam_chamber_id)+
+            "AND date_updated='{}'".format(latest_date)
         ).fetchone()
         upper_beam["id"] = beam_id
         upper_beam["hvl_al"] = ref_hvl

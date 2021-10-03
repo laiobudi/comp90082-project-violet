@@ -1,4 +1,5 @@
-from backend.utility.nk_value import select_from_farmer, select_from_planeparallel, connect_to_db
+from backend.utility.nk_value import select_from_farmer, select_from_planeparallel
+from backend.utility.start_calculate import connect_to_db
 import pytest, math
 
 cursor = connect_to_db()
