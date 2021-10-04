@@ -202,13 +202,21 @@ def check_exist(target, axis):
 
 def select_from_DB(cursor, ssd, hvl, diameter, type):
     #SQL query.
+    # retrieve latest lookup table
+    (latest_date,) = cursor.execute("SELECT TOP 1 date_updated "
+                                    "FROM bw_al_cu "
+                                    "ORDER BY date_updated "
+                                    "DESC").fetchone()
+    latest_date = latest_date.strftime('%Y-%m-%d')
 
-    bw_lookup_value = cursor.execute("SELECT bw "
+    bw_lookup_value = cursor.execute("SELECT TOP 1 bw "
                                 + "FROM bw_al_cu "
                                 + "WHERE type = '{}' ".format(type)
                                 + "AND ssd = {} ".format(ssd)
                                 + "AND diameter = {} ".format(diameter)
-                                + "AND hvl_{} = {}".format(type.lower(), hvl)).fetchall() #未完成。
+                                + "AND hvl_{} = {}".format(type.lower(), hvl) 
+                                + "ORDER BY date_updated " 
+                                + "DESC").fetchall() #未完成。
 
     # Check return 数量？
     # rowcount.
