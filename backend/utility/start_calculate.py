@@ -20,7 +20,7 @@ def start_calculate(audit_id):
 	nk_res, nk_warn = cal_nk_value(cursor, beams)
 
 	#### calculate BW
-	# cal_Bw_value(cursor, beams, cones)
+	bw_res = cal_Bw_value(cursor, beams, cones)
 
 	#### calculate Mu
 
@@ -69,6 +69,22 @@ def start_calculate(audit_id):
 							input_id,
 							nk_result['858'],
 							'858'))
+	# 看看这么写。
+	# for input_id, beam_id, cone_id in input_table:
+	# 	beam_cone_id = beam_id + "_" + cone_id 
+		
+	# 	for chamber_SN in CHAMBER_SN_FARMER+CHAMBER_SN_PP:
+	# 		res = {
+	# 			"back_result_id" : input_id + '-' + chamber_SN, 
+	# 			"input_id" : input_id, 
+	# 			"chamber_SN" : chamber_SN, 
+	# 			"nk" : , 
+	# 			"Bw_Al" : bw_res[beam_cone_id]["Bw_Al"], 
+	# 			"Bw_Cu" : bw_res[beam_cone_id]["Bw_Cu"], 
+	# 			"Bw_Combined" : bw_res[beam_cone_id]["Bw_Combined"], 
+	# 			...? 
+	# 		}
+	# 		back_result.append(res)
 
 	# Insert dummy data for bw, murho, kclose, pstem
 	# Just for sprint 1 presentation

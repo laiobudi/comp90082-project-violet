@@ -33,6 +33,7 @@ hvl_cu_axis = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1, 1.5, 2, 3, 4, 5]
 #### Main Calculation #####
 ###########################
 def cal_Bw_value(cursor, beams, cones):
+    result_list = {}
     # get beams and cones input values from database.
     # beams, cones = get_input_value()
 
@@ -50,20 +51,27 @@ def cal_Bw_value(cursor, beams, cones):
 
             # both Al and Cu exist, need to calculate average value
             bw_res = []
+            result = {}
 
             if hvl_type["Al"]:
                 al_res = calculation(cursor, cone["SSD"], cone["diameter"], beam["hvl_measured_al"], "Al")
                 bw_res.append(al_res)
+                result["Bw_Al"] = al_res
                 print('beam: ' + str(beam) + ', cone: ' + str(cone) + 'Al: ', str(al_res))
                 # storeIntoDb(table_name, Al_column_name, al_res)
             if hvl_type["Cu"]:
                 cu_res = calculation(cursor, cone["SSD"], cone["diameter"], beam["hvl_measured_cu"], "Cu")
                 bw_res.append(cu_res)
+                result["Bw_Cu"] = cu_res
                 print("beam: " + str(beam) + ", cone: " + str(cone) + 'Cu: ', str(cu_res))
                 # storeIntoDb(table_name, Cu_column_name, cu_res)
 
             # storeIntoDb(table_name, Combined_column_name, sum(bw_res) / len(bw_res))
             print("beam: " + str(beam) + ", cone: " + str(cone) + 'Combined: ', str(sum(bw_res) / len(bw_res)))
+            result["Bw_Combined"] = sum(bw_res) / len(bw_res)
+            result_list[beam["beam_id"] + "_" + cone["cone_id"]] = result
+
+    return result_list
 
 def calculation(cursor, ssd: float, diameter: float, hvl: float, type: str):
     if type == "Al":
