@@ -145,7 +145,7 @@ def select_input_from_db(cursor, audit_id):
 				"hvl_measured_cu": (value)[3]}
 		beams.append(beam)
 
-	input_cones_table = cursor.execute('SELECT cone_id, ssd, '
+	input_cones_table = cursor.execute('SELECT cone_id, ssd, open_closed, '
 									   + "CASE WHEN shape = 'circular' "
 										 "THEN field_diameter "
 									   + "	WHEN shape = 'square' "
@@ -161,7 +161,8 @@ def select_input_from_db(cursor, audit_id):
 	for key, value in enumerate(input_cones_table):
 		cone = {"cone_id": (value)[0],
 				"SSD": (value)[1],
-				"diameter": (value)[2]}
+				"open": (value)[2],
+				"diameter": (value)[3]}
 		cones.append(cone)
 	# DEBUG
 	# print(beams)
@@ -180,4 +181,4 @@ def convert_result_from_nk(input_id, nk, chamber_SN):
 
 # DEBUG
 if __name__ == "__main__":
-	start_calculate("ACDS-kV-5014")
+	start_calculate("ACDS-kV-4000")
