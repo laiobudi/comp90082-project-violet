@@ -1,6 +1,7 @@
 import pyodbc
 from backend.utility.nk_value import cal_nk_value
 from backend.utility.Bw_value import cal_Bw_value
+from backend.utility.ccc import cal_ccc_value
 
 CHAMBER_SN_FARMER = ["3587", "5447", "5448"]
 CHAMBER_SN_PP = ["1508", "858"]
@@ -25,7 +26,7 @@ def start_calculate(audit_id):
 	#### calculate Mu
 
 	#### calculate K close
-
+	k_closed_res = cal_ccc_value(bw_res, cones, beams)
 	#### calculate Pstem
 
 	#### Store results into Database
@@ -69,6 +70,10 @@ def start_calculate(audit_id):
 							input_id,
 							nk_result['858'],
 							'858'))
+		# store ccc results
+		for res in k_closed_res:
+			if beam_id == res["beam_id"] and cone_id == res["cone_id"]:
+				back_result["k_closed_cone"] = res["k_closed_cone"]
 	# 看看这么写。
 	# for input_id, beam_id, cone_id in input_table:
 	# 	beam_cone_id = beam_id + "_" + cone_id 
@@ -91,7 +96,7 @@ def start_calculate(audit_id):
 	for res in back_result:
 		res["bw"] = 1.257
 		res["murho"] = 1.018
-		res["k_closed_cone"] = 1.0
+		# res["k_closed_cone"] = 1.0
 		res["pstem"] = 1.0
 
 		cursor.execute("INSERT INTO back_result "
