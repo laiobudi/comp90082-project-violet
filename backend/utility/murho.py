@@ -14,12 +14,10 @@ def getMurhoTable(type):
         (latest_date,) = connection.execute("SELECT TOP 1 date_updated "
                                         "FROM murho_{} "
                                         "ORDER BY date_updated "
-                                        "DESC").format(type).fetchone()
+                                        "DESC".format(type)).fetchone()
         latest_date = latest_date.strftime('%Y-%m-%d')
 
-
-
-        query = "SELECT * FROM murho_{} AND date_updated={}".format(type, latest_date)
+        query = ("SELECT * FROM murho_{} WHERE date_updated='{}'".format(type, latest_date))
         cursor = connection.execute(query)
 
         columns = [column[0] for column in connection.description]
@@ -74,6 +72,7 @@ This function is to get the murho result for Cu/Al from look up table, it return
 """
 def cal_murho(beam_measured, hvl_type):
     hvls = getMurhoTable(hvl_type)
+    # print(hvls)
     hvls_list = ChangeToTuples(get_first_hvl("hvl_"+hvl_type, hvls))
     # if hvl matched look up table, just return the murho
     for row in hvls_list:
