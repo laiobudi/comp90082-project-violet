@@ -72,7 +72,6 @@ This function is to get the murho result for Cu/Al from look up table, it return
 """
 def cal_murho(beam_measured, hvl_type):
     hvls = getMurhoTable(hvl_type)
-    # print(hvls)
     hvls_list = ChangeToTuples(get_first_hvl("hvl_"+hvl_type, hvls))
     # if hvl matched look up table, just return the murho
     for row in hvls_list:
@@ -82,12 +81,15 @@ def cal_murho(beam_measured, hvl_type):
     min_hvl = hvls_list[0][0]
     max_hvl = hvls_list[-1][0]
     if beam_measured < min_hvl:
-        a = hvls_list[0][1]
-        b = hvls_list[1][1]
-        c = hvls_list[0][0]
-        target_known_val = beam_measured
-        e = hvls_list[1][0]
-        return interpolation(a, b, c, e, target_known_val)
+        """The code is to do Extrap"""
+        # a = hvls_list[0][1]
+        # b = hvls_list[1][1]
+        # c = hvls_list[0][0]
+        # target_known_val = beam_measured
+        # e = hvls_list[1][0]
+        # return interpolation(a, b, c, e, target_known_val)
+        """But know only return None according to excel"""
+        return None
     elif beam_measured > min_hvl and beam_measured < max_hvl:
         for index in range(len(hvls_list)):
             if (beam_measured - hvls_list[index][0]) < 0:
@@ -98,12 +100,15 @@ def cal_murho(beam_measured, hvl_type):
                 target_known_val = beam_measured
                 return interpolation(a, b, c, e, target_known_val)
     elif beam_measured > max_hvl:
-        e = hvls_list[-1][0]
-        b = hvls_list[-1][1]
-        c = hvls_list[-2][0]
-        a = hvls_list[-2][1]
-        target_known_val = beam_measured
-        return interpolation(a, b, c, e, target_known_val)
+        """The code is to do Extrap"""
+        # e = hvls_list[-1][0]
+        # b = hvls_list[-1][1]
+        # c = hvls_list[-2][0]
+        # a = hvls_list[-2][1]
+        # target_known_val = beam_measured
+        # return interpolation(a, b, c, e, target_known_val)
+        """But know only return None according to excel"""
+        return None
     else:
         return "Error!"
 

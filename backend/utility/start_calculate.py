@@ -26,7 +26,12 @@ def start_calculate(audit_id):
     # bw_res = cal_Bw_value(cursor, beams, cones)
 
     #### calculate Mu
-    # print(beams)
+    """
+    IMPORTANT:
+        beams must be a list containing dicts.
+        Even if beams only has 1 element, it must
+        be [dict()].
+    """
     mu_res = add_murho(beams)
     print(mu_res)
     #### calculate K close
