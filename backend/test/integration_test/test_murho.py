@@ -8,7 +8,7 @@ from backend.utility.murho import add_murho
 """
 Since correct data from Client's excel files are less,
 it is easy to test them all, just do it first.
-Then boundary test will be applied.
+Then boundary test will be applied later.
 """
 
 
@@ -169,3 +169,41 @@ def test_cu_boundary(beam_cu_boundary, beam_cu_boundary_result):
         assert assert_al
         assert assert_cu
         assert asser_murho
+
+# First HVL(mm Cu), First HVL(mm Al) == None
+# First HVL(mm Cu), First HVL(mm Al) are all less than minimum value
+# First HVL(mm Cu), First HVL(mm Al) are all greater than maximum value
+@pytest.mark.parametrize("beam_combine_boundary, beam_combine_boundary_result", [
+    ([
+         {"hvl_measured_al": None, "hvl_measured_cu": None},
+         {"hvl_measured_al": 0.029, "hvl_measured_cu": 0.099},
+         {"hvl_measured_al": 8.001, "hvl_measured_cu": 5.001}
+     ],
+     [
+         {"al_murho": None, "cu_murho": None, "murho": None},
+         {"al_murho": None, "cu_murho": None, "murho": None},
+         {"al_murho": None, "cu_murho": None, "murho": None}
+     ])
+])
+def test_combine_boundary(beam_combine_boundary, beam_combine_boundary_result):
+    res_beams = add_murho(beam_combine_boundary)
+    for i in range(len(res_beams)):
+        if res_beams[i]["al_murho"] is None:
+            assert_al = (res_beams[i]["al_murho"] == beam_combine_boundary_result[i]["al_murho"])
+        else:
+            assert_al = (round(res_beams[i]["al_murho"], 3) == beam_combine_boundary_result[i]["al_murho"])
+        if res_beams[i]["cu_murho"] is None:
+            assert_cu = (res_beams[i]["cu_murho"] == beam_combine_boundary_result[i]["cu_murho"])
+        else:
+            assert_cu = (round(res_beams[i]["cu_murho"], 3) == beam_combine_boundary_result[i]["cu_murho"])
+        if res_beams[i]["murho"] is None:
+            asser_murho = res_beams[i]["murho"] == beam_combine_boundary_result[i]["murho"]
+        else:
+            asser_murho = round(res_beams[i]["murho"], 3) == beam_combine_boundary_result[i]["murho"]
+        assert assert_al
+        assert assert_cu
+        assert asser_murho
+
+"""
+Blackbox tests:
+"""
