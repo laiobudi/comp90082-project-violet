@@ -27,6 +27,9 @@ def start_calculate(audit_id):
 
 	#### calculate K close
 	k_closed_res = cal_ccc_value(bw_res, cones, beams)
+	# for r in k_closed_res:
+	# 	print(r)
+	# print(k_closed_res)
 	#### calculate Pstem
 
 	#### Store results into Database
@@ -38,42 +41,26 @@ def start_calculate(audit_id):
 	back_result = []
 
 	for input_id, cone_id, beam_id in input_table:
+		beam_cone_id = beam_id + "_" + cone_id
 		for nk_result in nk_res:
 			if beam_id == nk_result['id']:
-				if '3587' in nk_result:
-					back_result.append(
-						convert_result_from_nk(
-							input_id,
-							nk_result['3587'],
-							'3587'))
-				if '5447' in nk_result:
-					back_result.append(
-						convert_result_from_nk(
-							input_id,
-							nk_result['5447'],
-							'5447'))
-				if '5448' in nk_result:
-					back_result.append(
-						convert_result_from_nk(
-							input_id,
-							nk_result['5448'],
-							'5448'))
-				if '1508' in nk_result:
-					back_result.append(
-						convert_result_from_nk(
-							input_id,
-							nk_result['1508'],
-							'1508'))
-				if '858' in nk_result:
-					back_result.append(
-						convert_result_from_nk(
-							input_id,
-							nk_result['858'],
-							'858'))
+				for chamber in CHAMBER_SN_FARMER+CHAMBER_SN_PP:
+					if chamber in nk_result:
+						back_result.append({
+							'back_result_id': input_id + '-' + chamber,
+							'input_id': input_id,
+							'chamber_SN': chamber,
+							'nk': nk_result[chamber],
+							'bw_combined': bw_res[beam_cone_id]["Bw_Combined"],
+							'bw_al': bw_res[beam_cone_id].get("Bw_Al", None),
+							'bw_cu': bw_res[beam_cone_id].get("Bw_Cu", None),
+							'k_closed_cone': k_closed_res[beam_cone_id].get("k_closed_cone", 1.0)
+						})
+
 		# store ccc results
-		for res in k_closed_res:
-			if beam_id == res["beam_id"] and cone_id == res["cone_id"]:
-				back_result["k_closed_cone"] = res["k_closed_cone"]
+		# for res in k_closed_res:
+		# 	if beam_id == res["beam_id"] and cone_id == res["cone_id"]:
+		# 		back_result["k_closed_cone"] = res["k_closed_cone"]
 	# 看看这么写。
 	# for input_id, beam_id, cone_id in input_table:
 	# 	beam_cone_id = beam_id + "_" + cone_id 
@@ -94,23 +81,23 @@ def start_calculate(audit_id):
 	# Insert dummy data for bw, murho, kclose, pstem
 	# Just for sprint 1 presentation
 	for res in back_result:
-		res["bw"] = 1.257
+		# res["bw"] = 1.257
 		res["murho"] = 1.018
 		# res["k_closed_cone"] = 1.0
 		res["pstem"] = 1.0
 
-		cursor.execute("INSERT INTO back_result "
-					   "VALUES ('{}', '{}', '{}', '{}', "
-					   "'{}', '{}', '{}', '{}')"
-					   .format(res['back_result_id'],
-							   res['input_id'],
-							   res['chamber_SN'],
-							   res['nk'],
-							   res['bw'],
-							   res['murho'],
-							   res['k_closed_cone'],
-							   res['pstem']))
-		cursor.commit()
+		# cursor.execute("INSERT INTO back_result "
+		# 			   "VALUES ('{}', '{}', '{}', '{}', "
+		# 			   "'{}', '{}', '{}', '{}')"
+		# 			   .format(res['back_result_id'],
+		# 					   res['input_id'],
+		# 					   res['chamber_SN'],
+		# 					   res['nk'],
+		# 					   res['bw'],
+		# 					   res['murho'],
+		# 					   res['k_closed_cone'],
+		# 					   res['pstem']))
+		# cursor.commit()
 
 		# DEBUG
 		# print(res)
@@ -130,10 +117,10 @@ def connect_to_db():
 	try:
 		connection = pyodbc.connect(
 			"Driver={ODBC Driver 17 for SQL Server};"
-			"Server=34.126.203.116,1433;"
-			"Database=violet_main;"
+			"Server=13.70.131.250,1433;"
+			"Database=violet_dev;"
 			"Uid=SA;"
-			"PWD=ProjViolet!1;"
+			"PWD=ProjViolet_1;"
 			"Trusted_Connection=no;"
 		)
 		# Create cursor object
@@ -202,4 +189,4 @@ def convert_result_from_nk(input_id, nk, chamber_SN):
 
 # DEBUG
 if __name__ == "__main__":
-	start_calculate("ACDS-kV-4000")
+	start_calculate("ACDS-kV-5014")

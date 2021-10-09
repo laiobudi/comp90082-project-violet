@@ -10,17 +10,17 @@ Main function for calculating NK
 '''
 def cal_ccc_value(bw_res, cones, beams):
 
-    results = []
+    results = {}
     for cone in cones:
         for beam in beams:
-            if bw_res[beam["beam_id"] + "_" + cone["cone_id"]]:
+            beam_cone_id = beam["beam_id"] + "_" + cone["cone_id"]
+            if cone["open"] == "Open":
 
-                if cone["open"] == "Open":
-                    result = {"beam_id": beam["beam_id"], "cone_id": cone["cone_Id"], "k_closed_cone": 1.000}
-                    results.append(result)
+                result = {"k_closed_cone": 1.000}
+                results[beam_cone_id] = result
 
-                elif cone["open"] == "Closed":
-                    bw_open = bw_res[beam["beam_id"] + "_" + cone["cone_id"]]["Bw_Combined"]
-                    result = {"beam_id": beam["beam_id"], "cone_id": cone["cone_Id"], "k_closed_cone": cal_k_closed_cone(bw_open)}
-                    results.append(result)
+            elif cone["open"] == "Closed":
+                bw_open = bw_res[beam_cone_id]["Bw_Combined"]
+                result = {"k_closed_cone": cal_k_closed_cone(bw_open)}
+                results[beam_cone_id] = result
     return results
