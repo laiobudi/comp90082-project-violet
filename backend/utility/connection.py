@@ -11,10 +11,10 @@ Output: cursor
 def DB_connect():
     connection = pyodbc.connect(
         "Driver={ODBC Driver 17 for SQL Server};"
-        "Server=34.126.203.116,1433;"
+        "Server=13.70.131.250,1433;"
         "Database=violet_main;"
         "Uid=SA;"
-        "PWD=ProjViolet!1;"
+        "PWD=ProjViolet_1;"
         "Trusted_Connection=no;"
     )
     return connection.cursor()

@@ -1,6 +1,7 @@
 import pyodbc
 from backend.utility.nk_value import cal_nk_value
 from backend.utility.Bw_value import cal_Bw_value
+from backend.utility.murho import add_murho
 from backend.utility.ccc import cal_ccc_value
 
 CHAMBER_SN_FARMER = ["3587", "5447", "5448"]
@@ -19,11 +20,13 @@ def start_calculate(audit_id):
 
 	#### calculate NK
 	nk_res, nk_warn = cal_nk_value(cursor, beams)
+	print(nk_res)
 
 	#### calculate BW
 	bw_res = cal_Bw_value(cursor, beams, cones)
 
 	#### calculate Mu
+	mu_res = add_murho(beams)
 
 	#### calculate K close
 	k_closed_res = cal_ccc_value(bw_res, cones, beams)
