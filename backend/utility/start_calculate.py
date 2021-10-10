@@ -34,10 +34,10 @@ def start_calculate(audit_id):
 	# 	print(r)
 	# print(k_closed_res)
 	#### calculate Pstem
-    pstem_list = select_pstem_input_from_db(cursor)
-    beam_cones_list = select_audit_input_from_db(cursor, audit_id)
+        pstem_list = select_pstem_input_from_db(cursor)
+        beam_cones_list = select_audit_input_from_db(cursor, audit_id)
 
-    pstem.cal_pstem_value(beams, cones, beam_cones_list, pstem_list)
+        pstem.cal_pstem_value(beams, cones, beam_cones_list, pstem_list)
 
 	#### Store results into Database
 	input_table = cursor.execute(
@@ -188,6 +188,7 @@ def select_input_from_db(cursor, audit_id):
 	# print(beams)
 	return beams, cones
 
+# get pstem vlaues in the db
 def select_pstem_input_from_db(cursor):
     pstem_list = []
     input_pstem_table = cursor.execute('select diameter, '
@@ -206,6 +207,7 @@ def select_pstem_input_from_db(cursor):
     # print(pstem_list[24]['pstem_value'])
     return pstem_list
 
+# Get the paired beam and cone from db
 def select_audit_input_from_db(cursor, audit_id):
     audit_list = []
     input_audit_table = cursor.execute('SELECT beam_id, '
