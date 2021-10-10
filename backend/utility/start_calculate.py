@@ -3,7 +3,8 @@ from backend.utility.nk_value import cal_nk_value
 from backend.utility.Bw_value import cal_Bw_value
 from backend.utility.murho import add_murho
 from backend.utility.ccc import cal_ccc_value
-import pstem
+from backend.utility.pstem import cal_pstem_value
+# import pstem
 
 CHAMBER_SN_FARMER = ["3587", "5447", "5448"]
 CHAMBER_SN_PP = ["1508", "858"]
@@ -34,10 +35,10 @@ def start_calculate(audit_id):
 	# 	print(r)
 	# print(k_closed_res)
 	#### calculate Pstem
-        pstem_list = select_pstem_input_from_db(cursor)
-        beam_cones_list = select_audit_input_from_db(cursor, audit_id)
-
-        pstem.cal_pstem_value(beams, cones, beam_cones_list, pstem_list)
+	pstem_list = select_pstem_input_from_db(cursor)
+	beam_cones_list = select_audit_input_from_db(cursor, audit_id)
+	pstem_res = cal_pstem_value(beams, cones, beam_cones_list, pstem_list)
+	print(pstem_res)
 
 	#### Store results into Database
 	input_table = cursor.execute(
@@ -75,18 +76,18 @@ def start_calculate(audit_id):
 		# 		back_result["k_closed_cone"] = res["k_closed_cone"]
 	# 看看这么写。
 	# for input_id, beam_id, cone_id in input_table:
-	# 	beam_cone_id = beam_id + "_" + cone_id 
-		
+	# 	beam_cone_id = beam_id + "_" + cone_id
+
 	# 	for chamber_SN in CHAMBER_SN_FARMER+CHAMBER_SN_PP:
 	# 		res = {
-	# 			"back_result_id" : input_id + '-' + chamber_SN, 
-	# 			"input_id" : input_id, 
-	# 			"chamber_SN" : chamber_SN, 
-	# 			"nk" : , 
-	# 			"Bw_Al" : bw_res[beam_cone_id]["Bw_Al"], 
-	# 			"Bw_Cu" : bw_res[beam_cone_id]["Bw_Cu"], 
-	# 			"Bw_Combined" : bw_res[beam_cone_id]["Bw_Combined"], 
-	# 			...? 
+	# 			"back_result_id" : input_id + '-' + chamber_SN,
+	# 			"input_id" : input_id,
+	# 			"chamber_SN" : chamber_SN,
+	# 			"nk" : ,
+	# 			"Bw_Al" : bw_res[beam_cone_id]["Bw_Al"],
+	# 			"Bw_Cu" : bw_res[beam_cone_id]["Bw_Cu"],
+	# 			"Bw_Combined" : bw_res[beam_cone_id]["Bw_Combined"],
+	# 			...?
 	# 		}
 	# 		back_result.append(res)
 
@@ -211,7 +212,7 @@ def select_pstem_input_from_db(cursor):
 def select_audit_input_from_db(cursor, audit_id):
     audit_list = []
     input_audit_table = cursor.execute('SELECT beam_id, '
-                                       + 'cone_id, '
+                                       + 'cone_id FROM audit_beam_inputs '
                                        + "WHERE audit_id "
                                        + "LIKE '{}%'".format(audit_id)
                                        ).fetchall()
