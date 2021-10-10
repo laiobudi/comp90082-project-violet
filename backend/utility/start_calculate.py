@@ -20,7 +20,6 @@ def start_calculate(audit_id):
 
 	#### calculate NK
 	nk_res, nk_warn = cal_nk_value(cursor, beams)
-	print(nk_res)
 
 	#### calculate BW
 	bw_res = cal_Bw_value(cursor, beams, cones)
@@ -57,8 +56,13 @@ def start_calculate(audit_id):
 							'bw_combined': bw_res[beam_cone_id]["Bw_Combined"],
 							'bw_al': bw_res[beam_cone_id].get("Bw_Al", None),
 							'bw_cu': bw_res[beam_cone_id].get("Bw_Cu", None),
+							# TODO: default value for murho could be revised to NONE?
+							'murho': next((x["murho"] for x in mu_res if x["beam_id"]==beam_id), 1.0),
 							'k_closed_cone': k_closed_res[beam_cone_id].get("k_closed_cone", 1.0)
 						})
+	# DEBUG
+	# for b in back_result:
+	# 	print(b)
 
 		# store ccc results
 		# for res in k_closed_res:
@@ -85,7 +89,7 @@ def start_calculate(audit_id):
 	# Just for sprint 1 presentation
 	for res in back_result:
 		# res["bw"] = 1.257
-		res["murho"] = 1.018
+		# res["murho"] = 1.018
 		# res["k_closed_cone"] = 1.0
 		res["pstem"] = 1.0
 
