@@ -3,6 +3,7 @@ from backend.utility.nk_value import cal_nk_value
 from backend.utility.Bw_value import cal_Bw_value
 from backend.utility.murho import add_murho
 from backend.utility.ccc import cal_ccc_value
+import pstem
 
 CHAMBER_SN_FARMER = ["3587", "5447", "5448"]
 CHAMBER_SN_PP = ["1508", "858"]
@@ -33,6 +34,10 @@ def start_calculate(audit_id):
 	# 	print(r)
 	# print(k_closed_res)
 	#### calculate Pstem
+    pstem_list = select_pstem_input_from_db(cursor)
+    beam_cones_list = select_audit_input_from_db(cursor, audit_id)
+
+    pstem.cal_pstem_value(beams, cones, beam_cones_list, pstem_list)
 
 	#### Store results into Database
 	input_table = cursor.execute(
@@ -182,6 +187,38 @@ def select_input_from_db(cursor, audit_id):
 	# DEBUG
 	# print(beams)
 	return beams, cones
+
+def select_pstem_input_from_db(cursor):
+    pstem_list = []
+    input_pstem_table = cursor.execute('select diameter, '
+                                       + 'hvl_measured_mm_al, '
+                                       + 'pstem_value '
+                                       + "from pstem_measured "
+                                       + "where pstem_option = 'measured' "
+                                       ).fetchall()
+    for key, value in enumerate(input_pstem_table):
+            pstem = {"diameter": (value)[0],
+                "hvl_measured_mm_al": (value)[1],
+                "pstem_value": (value)[2]}
+            pstem_list.append(pstem)
+
+    # DEBUG
+    # print(pstem_list[24]['pstem_value'])
+    return pstem_list
+
+def select_audit_input_from_db(cursor, audit_id):
+    audit_list = []
+    input_audit_table = cursor.execute('SELECT beam_id, '
+                                       + 'cone_id, '
+                                       + "WHERE audit_id "
+                                       + "LIKE '{}%'".format(audit_id)
+                                       ).fetchall()
+    for key, value in enumerate(input_audit_table):
+        audit = {"beam_id": (value)[0],
+                "cone_id": (value)[1]}
+        audit_list.append(audit)
+
+    return audit_list
 
 
 # convert to result format
