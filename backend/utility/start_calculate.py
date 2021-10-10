@@ -212,7 +212,8 @@ def select_audit_input_from_db(cursor, audit_id):
     audit_list = []
     input_audit_table = cursor.execute('SELECT beam_id, '
                                        + 'cone_id, '
-                                       + "WHERE audit_id "
+									   + "from audit_beam_inputs "
+                                       + "where audit_id "
                                        + "LIKE '{}%'".format(audit_id)
                                        ).fetchall()
     for key, value in enumerate(input_audit_table):
