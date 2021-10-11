@@ -1,6 +1,8 @@
 from backend.utility.interpolation import interpolation
 import numpy as np
 import pyodbc
+import backend.utility.globalvar as gl
+import backend.utility.set_global_var as sgv
 
 # input data from the `identification` sheet
 beams = [
@@ -20,11 +22,11 @@ cones = [
     {"cone_id": "E", "SSD": 30, "diameter": 5}
 ]
 
-diameter_axis = [1, 2, 3, 5, 10, 15, 20]
-ssd_al_axis = [1.5, 3, 5, 7, 10, 20, 30, 50, 100]
-ssd_cu_axis = [10, 20, 30, 50, 100]
-hvl_al_axis = [0.04, 0.05, 0.06, 0.08, 0.1, 0.12, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1, 1.2, 1.5, 2, 3, 4, 5, 6, 8]
-hvl_cu_axis = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1, 1.5, 2, 3, 4, 5]
+diameter_axis = gl.get_value('diameter_axis')
+ssd_al_axis = gl.get_value('ssd_al_axis')
+ssd_cu_axis = gl.get_value('ssd_cu_axis')
+hvl_al_axis = gl.get_value('hvl_al_axis')
+hvl_cu_axis = gl.get_value('hvl_cu_axis')
 
 
 
@@ -99,7 +101,7 @@ def calculation(cursor, ssd: float, diameter: float, hvl: float, type: str):
     # if (len(ssd_list) == 1 and len(diameter_list) == 1 and len(hvl_list) == 1):
     #     return select_from_DB(ssd_list[0], diameter_list[0], hvl_list[0], type)
 
-    if (ssd_list[0] == ssd_list[1] and diameter_list[0] == diameter_list[1] and hvl_list[0] == hvl_list[1]):
+    if ssd_list[0] == ssd_list[1] and diameter_list[0] == diameter_list[1] and hvl_list[0] == hvl_list[1]:
         return select_from_DB(cursor, ssd_list[0], hvl_list[0], diameter_list[0], type)
 
     # 至少一个匹配不上，建立3D数组存值。
@@ -134,10 +136,10 @@ def connect_to_db():
         # connect to database
         connection = pyodbc.connect(
             "Driver={ODBC Driver 17 for SQL Server};"
-            "Server=34.126.203.116,1433;"
-            "Database=violet_main;"
+            "Server=13.70.131.250,1433;"
+            "Database=violet_dev;"
             "Uid=SA;"
-            "PWD=ProjViolet!1;"
+            "PWD=ProjViolet_1;"
             "Trusted_Connection=no;"
         )
         # Create cursor object
@@ -214,12 +216,16 @@ def select_from_DB(cursor, ssd, hvl, diameter, type):
                                 + "WHERE type = '{}' ".format(type)
                                 + "AND ssd = {} ".format(ssd)
                                 + "AND diameter = {} ".format(diameter)
-                                + "AND hvl_{} = {}".format(type.lower(), hvl) 
-                                + "ORDER BY date_updated " 
+                                + "AND hvl_{} = {}".format(type.lower(), hvl)
+                                + "ORDER BY date_updated "
                                 + "DESC").fetchall() #未完成。
 
     # Check return 数量？
     # rowcount.
+    if len(bw_lookup_value) == 0:
+        # print(1)
+        raise Exception('The bw value of ssd = %f, hvl = %f, diameter = %f, type = %s does not exist in the lookup '
+                        'table.' % (ssd, hvl, diameter, type))
 
     for row in bw_lookup_value:
         return row.bw
