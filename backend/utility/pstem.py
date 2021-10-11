@@ -1,255 +1,171 @@
-# from interpolation import interpolation
-from backend.utility import interpolation
+from backend.utility.interpolation import interpolation
 
-CHAMBER_LIST = ["1508", "858"]
+CHAMBER_SN_PP = ["1508", "858"]
 
-###########################
-#### Main Calculation #####
-###########################
+def cal_pstem_value(cursor, beams, cones, beam_cone_list):
 
-def cal_pstem_value(beams: list, cones: list, beam_cones_list: list, pstem_list: list):
+    # Initialize result dict
+    results = []
 
-    beams_list = []
-    for beam_cones in beam_cones_list:
-        if beam_cones[0] not in beams_list:
-            beams_list.append(beam_cones[0])
-
-    beam_cones_dict = {}
-    for beams in beams_list:
-        cones_list = []
-        for beam_cones in beam_cones_list:
-            if beam_cones[0] == beams:
-                cones_list.append(beam_cones[1])
-        beam_cones_dict[beams] = cones_list
-
-    beam_dict = {}
+    # only calculate with Plane Parallel
     for beam in beams:
-        beam_id = beam[0]
-        m_hvl = beam[2]
-        cones_list = beam_cones_dict[beams]
+        hvl_al = beam["hvl_measured_al"]
+        beam_id = beam["beam_id"]
+        if hvl_al and hvl_al <= 2.204:
+            cone_ref_list = check_diameter_from_cone(beam_id, cones, beam_cone_list)
+            for cone in cone_ref_list:
+                cone_id = cone["cone_id"]
+                for chamber in CHAMBER_SN_PP:
+                    diameter = cone["diameter"]
 
-        d_list = []
-        for cone_id in cones_list:
-            for cone in cones:
-                if cone_id == cone[0]:
-                    d_list.append(cone[3])
+                    # TODO: can do extrapolation
+                    if diameter > 10: diameter = 10
 
-        p_dict = {}
-        if m_hvl > 2.2040:
-            return 1.000, 1.000, 1.000, 1.000, 1.000, 1.000
-        elif m_hvl == 0.2 and m_hvl == 0.8 and m_hvl == 2.2:
-            for chamber in CHAMBER_LIST:
-                p_temp_list = []
-                for d in d_list:
-                    d_1, d_2, d1, d2, d3, d4 = locate_d(chamber, m_hvl, d, pstem_list)
-                    p = interpolation(d1, d2, d_1, d, d_2)
-                    p_temp_list.append(p)
-                p_dict[chamber] = p_temp_list
-            beam_dict[beam_id] = p_dict
-   
-        elif m_hvl < 0.8:
-            for chamber in CHAMBER_LIST:
-                p_temp_list = []
-                for d in d_list:
-                    d_1, d_2, d1, d2, d3, d4 = locate_d(chamber, m_hvl, d, pstem_list)
-                    p1 = interpolation(d1, d2, d_1, d, d_2)
-                    p2 = interpolation(d3, d4, d_1, d, d_2)
-                    p = interpolation(p1, p2, 0.2, m_hvl, 0.8)
-                    p_temp_list.append(p)
-                p_dict[chamber] = p_temp_list
-            beam_dict[beam_id] = p_dict
+                    # Extract the reference diameters from table
+                    d_ref_1, d_ref_2 = select_from_pstem_d(cursor, chamber, diameter)
+                    # Extract the reference pstem from table
+                    first, second, third, forth = select_from_pstem(cursor, chamber, hvl_al, d_ref_1, d_ref_2)
 
-        elif m_hvl > 0.8:
-            for chamber in CHAMBER_LIST:
-                p_temp_list = []
-                for d in d_list:
-                    d_1, d_2, d1, d2, d3, d4 = locate_d(chamber, m_hvl, d, pstem_list)
-                    p1 = interpolation(d1, d2, d_1, d, d_2)
-                    p2 = interpolation(d3, d4, d_1, d, d_2)
-                    p = interpolation(p1, p2, 0.8, m_hvl, 2.2)
-                    p_temp_list.append(p)
-                p_dict[chamber] = p_temp_list
-            beam_dict[beam_id] = p_dict
+                    # Interpolation - three times
+                    first_interpo = interpolation(
+                        first["pstem"],
+                        third["pstem"],
+                        first["diameter"],
+                        third["diameter"],
+                        diameter)
+                    second_interpo = interpolation(
+                        second["pstem"],
+                        forth["pstem"],
+                        second["diameter"],
+                        forth["diameter"],
+                        diameter)
+                    final_interpo = interpolation(
+                        first_interpo,
+                        second_interpo,
+                        first["hvl_al"],
+                        second["hvl_al"],
+                        hvl_al)
 
-    return beam_dict
+                    # TODO: Store the result
+                    results.append({
+                        "beam_cone_id": beam_id + "_" + cone_id,
+                        "chamber": chamber,
+                        "pstem": final_interpo
+                    })
 
+    return results
 
-def locate_d(chamber, m_hvl, d, pstem_list):
-    c1_d_14_02 = pstem_list[0]
-    c1_d_14_08 = pstem_list[14]
-    c1_d_14_22 = pstem_list[28]
-    c1_d_28_02 = pstem_list[1]
-    c1_d_28_08 = pstem_list[15]
-    c1_d_28_22 = pstem_list[29]
-    c1_d_42_02 = pstem_list[2]
-    c1_d_42_08 = pstem_list[16]
-    c1_d_42_22 = pstem_list[30]
-    c1_d_50_02 = pstem_list[3]
-    c1_d_50_08 = pstem_list[17]
-    c1_d_50_22 = pstem_list[31]
-    c1_d_75_02 = pstem_list[4]
-    c1_d_75_08 = pstem_list[18]
-    c1_d_75_22 = pstem_list[32]
-    c1_d_84_02 = pstem_list[5]
-    c1_d_84_08 = pstem_list[19]
-    c1_d_84_22 = pstem_list[33]
-    c1_d_100_02 = pstem_list[6]
-    c1_d_100_08 = pstem_list[20]
-    c1_d_100_22 = pstem_list[34]
+def check_diameter_from_cone(beam_id, cones, beam_cone_list):
+    temp = []
+    for item in beam_cone_list:
+        if item["beam_id"] == beam_id:
+            temp.append(item["cone_id"])
 
-    c2_d_14_02 = pstem_list[7]
-    c2_d_14_08 = pstem_list[21]
-    c2_d_14_22 = pstem_list[35]
-    c2_d_28_02 = pstem_list[8]
-    c2_d_28_08 = pstem_list[22]
-    c2_d_28_22 = pstem_list[36]
-    c2_d_42_02 = pstem_list[9]
-    c2_d_42_08 = pstem_list[23]
-    c2_d_42_22 = pstem_list[37]
-    c2_d_50_02 = pstem_list[10]
-    c2_d_50_08 = pstem_list[24]
-    c2_d_50_22 = pstem_list[38]
-    c2_d_75_02 = pstem_list[11]
-    c2_d_75_08 = pstem_list[25]
-    c2_d_75_22 = pstem_list[39]
-    c2_d_84_02 = pstem_list[12]
-    c2_d_84_08 = pstem_list[26]
-    c2_d_84_22 = pstem_list[40]
-    c2_d_100_02 = pstem_list[13]
-    c2_d_100_08 = pstem_list[27]
-    c2_d_100_22 = pstem_list[41]
+    res = [x for x in cones if x["cone_id"] in temp]
+    return res
 
+def select_from_pstem_d(cursor, chamber, diameter):
 
-    if chamber == 858:
-        if m_hvl < 0.8 and m_hvl != 0.2:
-            if d < 2.8:
-                return 1.4, 2.8, c1_d_14_02['pstem_value'], c1_d_28_02['pstem_value'], c1_d_14_08['pstem_value'], c1_d_28_08['pstem_value']
-            elif d >= 2.8 and d < 4.2:
-                return 2.8, 4.2, c1_d_28_02['pstem_value'], c1_d_42_02['pstem_value'], c1_d_28_08['pstem_value'], c1_d_42_08['pstem_value']
-            elif d >= 4.2 and d < 5.0:
-                return 4.2, 5.0, c1_d_42_02['pstem_value'], c1_d_50_02['pstem_value'], c1_d_42_08['pstem_value'], c1_d_50_08['pstem_value']
-            elif d >= 5.0 and d < 7.5:
-                return 5.0, 7.5, c1_d_50_02['pstem_value'], c1_d_75_02['pstem_value'], c1_d_50_08['pstem_value'], c1_d_75_08['pstem_value']
-            elif d >= 7.5 and d < 8.4:
-                return 7.5, 8.4, c1_d_75_02['pstem_value'], c1_d_84_02['pstem_value'], c1_d_75_08['pstem_value'], c1_d_84_08['pstem_value']
-            elif d >= 8.4:
-                return 8.4, 10.0, c1_d_84_02['pstem_value'], c1_d_100_02['pstem_value'], c1_d_84_08['pstem_value'], c1_d_100_08['pstem_value']
-        elif m_hvl > 0.8 and m_hvl != 2.2:
-            if d < 2.8:
-                return 2.8, 4.2, c1_d_14_08['pstem_value'], c1_d_28_08['pstem_value'], c1_d_14_22['pstem_value'], c1_d_28_22['pstem_value']
-            elif d >= 2.8 and d < 4.2:
-                return 2.8, 4.2, c1_d_28_08['pstem_value'], c1_d_42_08['pstem_value'], c1_d_28_22['pstem_value'], c1_d_42_22['pstem_value']
-            elif d >= 4.2 and d < 5.0:
-                return 4.2, 5.0, c1_d_42_08['pstem_value'], c1_d_50_08['pstem_value'], c1_d_42_22['pstem_value'], c1_d_50_22['pstem_value']
-            elif d >= 5.0 and d < 7.5:
-                return 5.0, 7.5, c1_d_50_08['pstem_value'], c1_d_75_08['pstem_value'], c1_d_50_22['pstem_value'], c1_d_75_22['pstem_value']
-            elif d >= 7.5 and d < 8.4:
-                return 7.5, 8.4, c1_d_75_08['pstem_value'], c1_d_84_08['pstem_value'], c1_d_75_22['pstem_value'], c1_d_84_22['pstem_value']
-            elif d >= 8.4:
-                return 8.4, 10.0, c1_d_84_08['pstem_value'], c1_d_100_08['pstem_value'], c1_d_84_22['pstem_value'], c1_d_100_22['pstem_value']
-        elif m_hvl == 0.2:
-            if d < 2.8:
-                return 1.4, 2.8, c1_d_14_02['pstem_value'], c1_d_28_02['pstem_value'], 0, 0
-            elif d >= 2.8 and d < 4.2:
-                return 2.8, 4.2, c1_d_28_02['pstem_value'], c1_d_42_02['pstem_value'], 0, 0
-            elif d >= 4.2 and d < 5.0:
-                return 4.2, 5.0, c1_d_42_02['pstem_value'], c1_d_50_02['pstem_value'], 0, 0
-            elif d >= 5.0 and d < 7.5:
-                return 5.0, 7.5, c1_d_50_02['pstem_value'], c1_d_75_02['pstem_value'], 0, 0
-            elif d >= 7.5 and d < 8.4:
-                return 7.5, 8.4, c1_d_75_02['pstem_value'], c1_d_84_02['pstem_value'], 0, 0
-            elif d >= 8.4:
-                return 8.4, 10.0, c1_d_84_02['pstem_value'], c1_d_100_02['pstem_value'], 0, 0
-        elif m_hvl == 0.8:
-            if d < 2.8:
-                return 1.4, 2.8, c1_d_14_08['pstem_value'], c1_d_28_08['pstem_value'], 0, 0
-            elif d >= 2.8 and d < 4.2:
-                return 2.8, 4.2, c1_d_28_08['pstem_value'], c1_d_42_08['pstem_value'], 0, 0
-            elif d >= 4.2 and d < 5.0:
-                return 4.2, 5.0, c1_d_42_08['pstem_value'], c1_d_50_08['pstem_value'], 0, 0
-            elif d >= 5.0 and d < 7.5:
-                return 5.0, 7.5, c1_d_50_08['pstem_value'], c1_d_75_08['pstem_value'], 0, 0
-            elif d >= 7.5 and d < 8.4:
-                return 7.5, 8.4, c1_d_75_08['pstem_value'], c1_d_84_08['pstem_value'], 0, 0
-            elif d >= 8.4:
-                return 8.4, 10.0, c1_d_84_08['pstem_value'], c1_d_100_08['pstem_value'], 0, 0
-        elif m_hvl == 2.2:
-            if d < 2.8:
-                return 1.4, 2.8, c1_d_14_22['pstem_value'], c1_d_28_22['pstem_value'], 0, 0
-            elif d >= 2.8 and d < 4.2:
-                return 2.8, 4.2, c1_d_28_22['pstem_value'], c1_d_42_22['pstem_value'], 0, 0
-            elif d >= 4.2 and d < 5.0:
-                return 4.2, 5.0, c1_d_42_22['pstem_value'], c1_d_50_22['pstem_value'], 0, 0
-            elif d >= 5.0 and d < 7.5:
-                return 5.0, 7.5, c1_d_50_22['pstem_value'], c1_d_75_22['pstem_value'], 0, 0
-            elif d >= 7.5 and d < 8.4:
-                return 7.5, 8.4, c1_d_75_22['pstem_value'], c1_d_84_22['pstem_value'], 0, 0
-            elif d >= 8.4:
-                return 8.4, 10.0, c1_d_84_22['pstem_value'], c1_d_100_22['pstem_value'], 0, 0
-    elif chamber == 1508:
-        if m_hvl < 0.8 and m_hvl != 0.2:
-            if d < 2.8:
-                return 1.4, 2.8, c2_d_14_02['pstem_value'], c2_d_28_02['pstem_value'], c2_d_14_08['pstem_value'], c2_d_28_08['pstem_value']
-            elif d >= 2.8 and d < 4.2:
-                return 2.8, 4.2, c2_d_28_02['pstem_value'], c2_d_42_02['pstem_value'], c2_d_28_08['pstem_value'], c2_d_42_08['pstem_value']
-            elif d >= 4.2 and d < 5.0:
-                return 4.2, 5.0, c2_d_42_02['pstem_value'], c2_d_50_02['pstem_value'], c2_d_42_08['pstem_value'], c2_d_50_08['pstem_value']
-            elif d >= 5.0 and d < 7.5:
-                return 5.0, 7.5, c2_d_50_02['pstem_value'], c2_d_75_02['pstem_value'], c2_d_50_08['pstem_value'], c2_d_75_08['pstem_value']
-            elif d >= 7.5 and d < 8.4:
-                return 7.5, 8.4, c2_d_75_02['pstem_value'], c2_d_84_02['pstem_value'], c2_d_75_08['pstem_value'], c2_d_84_08['pstem_value']
-            elif d >= 8.4:
-                return 8.4, 10.0, c2_d_84_02['pstem_value'], c2_d_100_02['pstem_value'], c2_d_84_08['pstem_value'], c2_d_100_08['pstem_value']
-        elif m_hvl > 0.8 and m_hvl != 2.2:
-            if d < 2.8:
-                return 2.8, 4.2, c2_d_14_08['pstem_value'], c2_d_28_08['pstem_value'], c2_d_14_22['pstem_value'], c2_d_28_22['pstem_value']
-            elif d >= 2.8 and d < 4.2:
-                return 2.8, 4.2, c2_d_28_08['pstem_value'], c2_d_42_08['pstem_value'], c2_d_28_22['pstem_value'], c2_d_42_22['pstem_value']
-            elif d >= 4.2 and d < 5.0:
-                return 4.2, 5.0, c2_d_42_08['pstem_value'], c2_d_50_08['pstem_value'], c2_d_42_22['pstem_value'], c2_d_50_22['pstem_value']
-            elif d >= 5.0 and d < 7.5:
-                return 5.0, 7.5, c2_d_50_08['pstem_value'], c2_d_75_08['pstem_value'], c2_d_50_22['pstem_value'], c2_d_75_22['pstem_value']
-            elif d >= 7.5 and d < 8.4:
-                return 7.5, 8.4, c2_d_75_08['pstem_value'], c2_d_84_08['pstem_value'], c2_d_75_22['pstem_value'], c2_d_84_22['pstem_value']
-            elif d >= 8.4:
-                return 8.4, 10.0, c2_d_84_08['pstem_value'], c2_d_100_08['pstem_value'], c2_d_84_22['pstem_value'], c2_d_100_22['pstem_value']
-        elif m_hvl == 0.2:
-            if d < 2.8:
-                return 1.4, 2.8, c2_d_14_02['pstem_value'], c2_d_28_02['pstem_value'], 0, 0
-            elif d >= 2.8 and d < 4.2:
-                return 2.8, 4.2, c2_d_28_02['pstem_value'], c2_d_42_02['pstem_value'], 0, 0
-            elif d >= 4.2 and d < 5.0:
-                return 4.2, 5.0, c2_d_42_02['pstem_value'], c2_d_50_02['pstem_value'], 0, 0
-            elif d >= 5.0 and d < 7.5:
-                return 5.0, 7.5, c2_d_50_02['pstem_value'], c2_d_75_02['pstem_value'], 0, 0
-            elif d >= 7.5 and d < 8.4:
-                return 7.5, 8.4, c2_d_75_02['pstem_value'], c2_d_84_02['pstem_value'], 0, 0
-            elif d >= 8.4:
-                return 8.4, 10.0, c2_d_84_02['pstem_value'], c2_d_100_02['pstem_value'], 0, 0
-        elif m_hvl == 0.8:
-            if d < 2.8:
-                return 1.4, 2.8, c2_d_14_08['pstem_value'], c2_d_28_08['pstem_value'], 0, 0
-            elif d >= 2.8 and d < 4.2:
-                return 2.8, 4.2, c2_d_28_08['pstem_value'], c2_d_42_08['pstem_value'], 0, 0
-            elif d >= 4.2 and d < 5.0:
-                return 4.2, 5.0, c2_d_42_08['pstem_value'], c2_d_50_08['pstem_value'], 0, 0
-            elif d >= 5.0 and d < 7.5:
-                return 5.0, 7.5, c2_d_50_08['pstem_value'], c2_d_75_08['pstem_value'], 0, 0
-            elif d >= 7.5 and d < 8.4:
-                return 7.5, 8.4, c2_d_75_08['pstem_value'], c2_d_84_08['pstem_value'], 0, 0
-            elif d >= 8.4:
-                return 8.4, 10.0, c2_d_84_08['pstem_value'], c2_d_100_08['pstem_value'], 0, 0
-        elif m_hvl == 2.2:
-            if d < 2.8:
-                return 1.4, 2.8, c2_d_14_22['pstem_value'], c2_d_28_22['pstem_value'], 0, 0
-            elif d >= 2.8 and d < 4.2:
-                return 2.8, 4.2, c2_d_28_22['pstem_value'], c2_d_42_22['pstem_value'], 0, 0
-            elif d >= 4.2 and d < 5.0:
-                return 4.2, 5.0, c2_d_42_22['pstem_value'], c2_d_50_22['pstem_value'], 0, 0
-            elif d >= 5.0 and d < 7.5:
-                return 5.0, 7.5, c2_d_50_22['pstem_value'], c2_d_75_22['pstem_value'], 0, 0
-            elif d >= 7.5 and d < 8.4:
-                return 7.5, 8.4, c2_d_75_22['pstem_value'], c2_d_84_22['pstem_value'], 0, 0
-            elif d >= 8.4:
-                return 8.4, 10.0, c2_d_84_22['pstem_value'], c2_d_100_22['pstem_value'], 0, 0
+    #TODO: date_updated
 
+    (d_ref_1, ) = cursor.execute("SELECT TOP 1 diameter "
+                                 "FROM pstem_measured "
+                                 "WHERE diameter<={} ".format(diameter) +
+                                 "AND beam_pp_chamber_id "
+                                 "LIKE '%{}' ".format(chamber) +
+                                 "AND pstem_option='measured' "
+                                 "ORDER BY diameter DESC").fetchone()
+    (d_ref_2, ) = cursor.execute("SELECT TOP 1 diameter "
+                                 "FROM pstem_measured "
+                                 "WHERE diameter>={} ".format(diameter) +
+                                 "AND beam_pp_chamber_id "
+                                 "LIKE '%{}' ".format(chamber) +
+                                 "AND pstem_option='measured' "
+                                 "ORDER BY diameter").fetchone()
+    return d_ref_1, d_ref_2
+
+def select_from_pstem(cursor, chamber, hvl_al, d_ref_1, d_ref_2):
+
+    # retrieve the latest lookup table
+    (latest_date,) = cursor.execute("SELECT TOP 1 date_updated "
+                                    "FROM pstem_measured "
+                                    "WHERE pstem_option='measured' "
+                                    "ORDER BY date_updated "
+                                    "DESC").fetchone()
+    latest_date = latest_date.strftime('%Y-%m-%d')
+
+    # TODO: hvl_al<0.2?
+    if hvl_al<0.2: hvl_al=0.2
+
+    # Find the hvl boundary for different diameters
+    first_lower_table = cursor.execute("SELECT TOP 1 * "
+                                     "FROM pstem_measured "
+                                     "WHERE "
+                                     "hvl_measured_mm_al<={} ".format(hvl_al) +
+                                     "AND pstem_option='measured' "
+                                     "AND diameter={} ".format(d_ref_1) +
+                                     "AND beam_pp_chamber_id "
+                                     "LIKE '%{}' ".format(chamber) +
+                                     "AND date_updated='{}' ".format(latest_date) +
+                                     "ORDER BY hvl_measured_mm_al "
+                                     "DESC").fetchone()
+    first_lower = {
+        "chamber": chamber,
+        "diameter": first_lower_table[2],
+        "hvl_al": first_lower_table[3],
+        "pstem": first_lower_table[4]
+    }
+
+    first_upper_table = cursor.execute("SELECT TOP 1 * "
+                                     "FROM pstem_measured "
+                                     "WHERE "
+                                     "hvl_measured_mm_al>={} ".format(hvl_al) +
+                                     "AND pstem_option='measured' "
+                                     "AND diameter={} ".format(d_ref_1) +
+                                     "AND beam_pp_chamber_id "
+                                     "LIKE '%{}' ".format(chamber) +
+                                     "AND date_updated='{}' ".format(latest_date) +
+                                     "ORDER BY hvl_measured_mm_al").fetchone()
+    first_upper = {
+        "chamber": chamber,
+        "diameter": first_upper_table[2],
+        "hvl_al": first_upper_table[3],
+        "pstem": first_upper_table[4]
+    }
+
+    second_lower_table = cursor.execute("SELECT TOP 1 * "
+                                     "FROM pstem_measured "
+                                     "WHERE "
+                                     "hvl_measured_mm_al<={} ".format(hvl_al) +
+                                     "AND pstem_option='measured' "
+                                     "AND diameter={} ".format(d_ref_2) +
+                                     "AND beam_pp_chamber_id "
+                                     "LIKE '%{}' ".format(chamber) +
+                                     "AND date_updated='{}' ".format(latest_date) +
+                                     "ORDER BY hvl_measured_mm_al "
+                                     "DESC").fetchone()
+    second_lower = {
+        "chamber": chamber,
+        "diameter": second_lower_table[2],
+        "hvl_al": second_lower_table[3],
+        "pstem": second_lower_table[4]
+    }
+
+    second_upper_table = cursor.execute("SELECT TOP 1 * "
+                                     "FROM pstem_measured "
+                                     "WHERE "
+                                     "hvl_measured_mm_al>={} ".format(hvl_al) +
+                                     "AND pstem_option='measured' "
+                                     "AND diameter={} ".format(d_ref_2) +
+                                     "AND beam_pp_chamber_id "
+                                     "LIKE '%{}' ".format(chamber) +
+                                     "AND date_updated='{}' ".format(latest_date) +
+                                     "ORDER BY hvl_measured_mm_al").fetchone()
+    second_upper = {
+        "chamber": chamber,
+        "diameter": second_upper_table[2],
+        "hvl_al": second_upper_table[3],
+        "pstem": second_upper_table[4]
+    }
+
+    return first_lower, first_upper, second_lower, second_upper

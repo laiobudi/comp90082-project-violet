@@ -57,17 +57,17 @@ def cal_Bw_value(cursor, beams, cones):
                 al_res = calculation(cursor, cone["SSD"], cone["diameter"], beam["hvl_measured_al"], "Al")
                 bw_res.append(al_res)
                 result["Bw_Al"] = al_res
-                print('beam: ' + str(beam) + ', cone: ' + str(cone) + 'Al: ', str(al_res))
+                # print('beam: ' + str(beam) + ', cone: ' + str(cone) + 'Al: ', str(al_res))
                 # storeIntoDb(table_name, Al_column_name, al_res)
             if hvl_type["Cu"]:
                 cu_res = calculation(cursor, cone["SSD"], cone["diameter"], beam["hvl_measured_cu"], "Cu")
                 bw_res.append(cu_res)
                 result["Bw_Cu"] = cu_res
-                print("beam: " + str(beam) + ", cone: " + str(cone) + 'Cu: ', str(cu_res))
+                # print("beam: " + str(beam) + ", cone: " + str(cone) + 'Cu: ', str(cu_res))
                 # storeIntoDb(table_name, Cu_column_name, cu_res)
 
             # storeIntoDb(table_name, Combined_column_name, sum(bw_res) / len(bw_res))
-            print("beam: " + str(beam) + ", cone: " + str(cone) + 'Combined: ', str(sum(bw_res) / len(bw_res)))
+            # print("beam: " + str(beam) + ", cone: " + str(cone) + 'Combined: ', str(sum(bw_res) / len(bw_res)))
             result["Bw_Combined"] = sum(bw_res) / len(bw_res)
             result_list[beam["beam_id"] + "_" + cone["cone_id"]] = result
 
@@ -233,27 +233,21 @@ def checkType(info: dict):
     return hvl_type
 
 
-# DB query: Store data into Db
-def storeIntoDb():
-    # TODO: INSERT ...
-    return 0
-
-
-if __name__ == "__main__":
-    cursor = connect_to_db()
-
-    audit_id = 'ACDS-kV-5014'
-    beams, cones = select_input_from_db(cursor, audit_id)
-    print(beams, cones)
-
-    beams = [
-    {"beam_id": "Filter1", "kvp": 60, "hvl_measured_al": 1.268, "hvl_measured_cu": None},
-    {"beam_id": "Filter2", "kvp": 80, "hvl_measured_al": 2.321, "hvl_measured_cu": None},
-    {"beam_id": "Filter3", "kvp": 100, "hvl_measured_al": 2.881, "hvl_measured_cu": None},
-    {"beam_id": "Filter4", "kvp": 120, "hvl_measured_al": 5.123, "hvl_measured_cu": 0.227},
-    {"beam_id": "Filter5", "kvp": 150, "hvl_measured_al": None, "hvl_measured_cu": 0.339},
-    {"beam_id": "Filter6", "kvp": 180, "hvl_measured_al": None, "hvl_measured_cu": 0.504},
-    {"beam_id": "Filter7", "kvp": 200, "hvl_measured_al": None, "hvl_measured_cu": 1.042},
-    {"beam_id": "Filter8", "kvp": 250, "hvl_measured_al": None, "hvl_measured_cu": 2.117}
-]
-    cal_Bw_value(beams, cones)
+# if __name__ == "__main__":
+#     cursor = connect_to_db()
+#
+#     audit_id = 'ACDS-kV-5014'
+#     beams, cones = select_input_from_db(cursor, audit_id)
+#     print(beams, cones)
+#
+#     beams = [
+#     {"beam_id": "Filter1", "kvp": 60, "hvl_measured_al": 1.268, "hvl_measured_cu": None},
+#     {"beam_id": "Filter2", "kvp": 80, "hvl_measured_al": 2.321, "hvl_measured_cu": None},
+#     {"beam_id": "Filter3", "kvp": 100, "hvl_measured_al": 2.881, "hvl_measured_cu": None},
+#     {"beam_id": "Filter4", "kvp": 120, "hvl_measured_al": 5.123, "hvl_measured_cu": 0.227},
+#     {"beam_id": "Filter5", "kvp": 150, "hvl_measured_al": None, "hvl_measured_cu": 0.339},
+#     {"beam_id": "Filter6", "kvp": 180, "hvl_measured_al": None, "hvl_measured_cu": 0.504},
+#     {"beam_id": "Filter7", "kvp": 200, "hvl_measured_al": None, "hvl_measured_cu": 1.042},
+#     {"beam_id": "Filter8", "kvp": 250, "hvl_measured_al": None, "hvl_measured_cu": 2.117}
+# ]
+#     cal_Bw_value(beams, cones)

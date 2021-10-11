@@ -4,7 +4,6 @@ from backend.utility.Bw_value import cal_Bw_value
 from backend.utility.murho import add_murho
 from backend.utility.ccc import cal_ccc_value
 from backend.utility.pstem import cal_pstem_value
-# import pstem
 
 CHAMBER_SN_FARMER = ["3587", "5447", "5448"]
 CHAMBER_SN_PP = ["1508", "858"]
@@ -31,14 +30,10 @@ def start_calculate(audit_id):
 
 	#### calculate K close
 	k_closed_res = cal_ccc_value(bw_res, cones, beams)
-	# for r in k_closed_res:
-	# 	print(r)
-	# print(k_closed_res)
+
 	#### calculate Pstem
-	pstem_list = select_pstem_input_from_db(cursor)
-	beam_cones_list = select_audit_input_from_db(cursor, audit_id)
-	pstem_res = cal_pstem_value(beams, cones, beam_cones_list, pstem_list)
-	print(pstem_res)
+	beam_cone_list = select_beam_cone_from_db(cursor, audit_id)
+	pstem_res = cal_pstem_value(cursor, beams, cones, beam_cone_list)
 
 	#### Store results into Database
 	input_table = cursor.execute(
@@ -64,53 +59,27 @@ def start_calculate(audit_id):
 							'bw_cu': bw_res[beam_cone_id].get("Bw_Cu", None),
 							# TODO: default value for murho could be revised to NONE?
 							'murho': next((x["murho"] for x in mu_res if x["beam_id"]==beam_id), 1.0),
-							'k_closed_cone': k_closed_res[beam_cone_id].get("k_closed_cone", 1.0)
+							'k_closed_cone': k_closed_res[beam_cone_id].get("k_closed_cone", 1.0),
+							'pstem': next((x["pstem"] for x in pstem_res if x["beam_cone_id"]==beam_cone_id and x["chamber"]==chamber), 1.0),
+							'warning': next((x['message'] for x in nk_warn if x["beam_id"]==beam_id), None)
 						})
-	# DEBUG
-	# for b in back_result:
-	# 	print(b)
 
-		# store ccc results
-		# for res in k_closed_res:
-		# 	if beam_id == res["beam_id"] and cone_id == res["cone_id"]:
-		# 		back_result["k_closed_cone"] = res["k_closed_cone"]
-	# 看看这么写。
-	# for input_id, beam_id, cone_id in input_table:
-	# 	beam_cone_id = beam_id + "_" + cone_id
-
-	# 	for chamber_SN in CHAMBER_SN_FARMER+CHAMBER_SN_PP:
-	# 		res = {
-	# 			"back_result_id" : input_id + '-' + chamber_SN,
-	# 			"input_id" : input_id,
-	# 			"chamber_SN" : chamber_SN,
-	# 			"nk" : ,
-	# 			"Bw_Al" : bw_res[beam_cone_id]["Bw_Al"],
-	# 			"Bw_Cu" : bw_res[beam_cone_id]["Bw_Cu"],
-	# 			"Bw_Combined" : bw_res[beam_cone_id]["Bw_Combined"],
-	# 			...?
-	# 		}
-	# 		back_result.append(res)
-
-	# Insert dummy data for bw, murho, kclose, pstem
-	# Just for sprint 1 presentation
 	for res in back_result:
-		# res["bw"] = 1.257
-		# res["murho"] = 1.018
-		# res["k_closed_cone"] = 1.0
-		res["pstem"] = 1.0
 
-		# cursor.execute("INSERT INTO back_result "
-		# 			   "VALUES ('{}', '{}', '{}', '{}', "
-		# 			   "'{}', '{}', '{}', '{}')"
-		# 			   .format(res['back_result_id'],
-		# 					   res['input_id'],
-		# 					   res['chamber_SN'],
-		# 					   res['nk'],
-		# 					   res['bw'],
-		# 					   res['murho'],
-		# 					   res['k_closed_cone'],
-		# 					   res['pstem']))
-		# cursor.commit()
+		cursor.execute("INSERT INTO back_result "
+					   "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+					   (res["back_result_id"],
+						res["input_id"],
+						res["chamber_SN"],
+						res["nk"],
+						res["bw_combined"],
+						res["bw_al"],
+						res["bw_cu"],
+						res["murho"],
+						res["k_closed_cone"],
+						res["pstem"],
+						res["warning"]))
+		cursor.commit()
 
 		# DEBUG
 		# print(res)
@@ -189,27 +158,8 @@ def select_input_from_db(cursor, audit_id):
 	# print(beams)
 	return beams, cones
 
-# get pstem vlaues in the db
-def select_pstem_input_from_db(cursor):
-    pstem_list = []
-    input_pstem_table = cursor.execute('select diameter, '
-                                       + 'hvl_measured_mm_al, '
-                                       + 'pstem_value '
-                                       + "from pstem_measured "
-                                       + "where pstem_option = 'measured' "
-                                       ).fetchall()
-    for key, value in enumerate(input_pstem_table):
-            pstem = {"diameter": (value)[0],
-                "hvl_measured_mm_al": (value)[1],
-                "pstem_value": (value)[2]}
-            pstem_list.append(pstem)
-
-    # DEBUG
-    # print(pstem_list[24]['pstem_value'])
-    return pstem_list
-
 # Get the paired beam and cone from db
-def select_audit_input_from_db(cursor, audit_id):
+def select_beam_cone_from_db(cursor, audit_id):
     audit_list = []
     input_audit_table = cursor.execute('SELECT beam_id, '
                                        + 'cone_id FROM audit_beam_inputs '
