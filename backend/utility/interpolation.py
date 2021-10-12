@@ -4,6 +4,7 @@
 # @params: d is input_beam's input (e.g. hvl_measured, d..)
 def interpolation(a, b, c, e, d):
 	if a == b: return a
+	if c == e: raise Exception("can not divide by 0")
 	return a - (((c - d) * (a - b)) / (c - e))
 
 

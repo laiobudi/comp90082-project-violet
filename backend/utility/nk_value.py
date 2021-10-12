@@ -264,6 +264,9 @@ def select_from_farmer(cursor, kvp, hvl, type):
         lower_beam["hvl_" + type], upper_beam["hvl_" + type] = \
             lower_hvl, upper_hvl
 
+        if lower_beam == {} or upper_beam == {}:
+            raise Exception("Invalid Lookup data from database")
+
         return lower_beam, upper_beam, True
 
     # HVL not in the scope (EXTRAPOLATION)
@@ -326,6 +329,9 @@ def select_from_farmer(cursor, kvp, hvl, type):
     ).fetchone()
     first_beam["hvl_" + type], second_beam["hvl_" + type] = \
         first_hvl, second_hvl
+
+    if first_beam == {} or second_beam == {}:
+        raise Exception("Invalid Lookup data from database")
 
     return first_beam, second_beam, False
 
@@ -400,5 +406,8 @@ def select_from_planeparallel(cursor, kvp, hvl, type="al"):
         upper_beam["id"] = beam_id
         upper_beam["hvl_al"] = ref_hvl
         upper_beam["nk_" + chamber_SN] = upper_nk
+
+    if lower_beam == {} or upper_beam == {}:
+        raise Exception("Invalid Lookup data from database")
 
     return lower_beam, upper_beam
