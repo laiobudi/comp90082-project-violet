@@ -1,7 +1,7 @@
 import pyodbc
 from backend.utility.nk_value import cal_nk_value
 from backend.utility.Bw_value import cal_Bw_value
-from backend.utility.murho import add_murho
+from backend.utility.murho import cal_murho_value
 from backend.utility.ccc import cal_ccc_value
 from backend.utility.pstem import cal_pstem_value
 
@@ -26,7 +26,7 @@ def start_calculate(audit_id):
 	bw_res = cal_Bw_value(cursor, beams, cones)
 
 	#### calculate Mu
-	mu_res = add_murho(beams)
+	mu_res = cal_murho_value(beams)
 
 	#### calculate K close
 	k_closed_res = cal_ccc_value(bw_res, cones, beams)

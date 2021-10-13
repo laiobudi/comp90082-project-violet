@@ -3,7 +3,7 @@ import numpy
 
 sys.path.append("../..")
 import pytest
-from backend.utility.murho import add_murho
+from backend.utility.murho import cal_murho_value
 
 """
 Since correct data from Client's excel files are less,
@@ -35,7 +35,7 @@ Then boundary test will be applied later.
      ])
 ])
 def test_hogwarts(beams_hogwarts, beams_hogwarts_excel):
-    res_beams = add_murho(beams_hogwarts)
+    res_beams = cal_murho_value(beams_hogwarts)
     for i in range(len(res_beams)):
         if res_beams[i]["al_murho"] is None:
             assert_al = (res_beams[i]["al_murho"] == beams_hogwarts_excel[i]["al_murho"])
@@ -67,7 +67,7 @@ def test_hogwarts(beams_hogwarts, beams_hogwarts_excel):
      ])
 ])
 def test_springfield(beams_springfield, beams_springfield_excel):
-    res_beams = add_murho(beams_springfield)
+    res_beams = cal_murho_value(beams_springfield)
     for i in range(len(res_beams)):
         if res_beams[i]["al_murho"] is None:
             assert_al = (res_beams[i]["al_murho"] == beams_springfield_excel[i]["al_murho"])
@@ -114,7 +114,7 @@ If hvl is out of boundary, cu_murho(or al_murho), murho will be None
      ])
 ])
 def test_al_boundary(beam_al_boundary, beam_al_boundary_result):
-    res_beams = add_murho(beam_al_boundary)
+    res_beams = cal_murho_value(beam_al_boundary)
     for i in range(len(res_beams)):
         if res_beams[i]["al_murho"] is None:
             assert_al = (res_beams[i]["al_murho"] == beam_al_boundary_result[i]["al_murho"])
@@ -152,7 +152,7 @@ def test_al_boundary(beam_al_boundary, beam_al_boundary_result):
      ])
 ])
 def test_cu_boundary(beam_cu_boundary, beam_cu_boundary_result):
-    res_beams = add_murho(beam_cu_boundary)
+    res_beams = cal_murho_value(beam_cu_boundary)
     for i in range(len(res_beams)):
         if res_beams[i]["al_murho"] is None:
             assert_al = (res_beams[i]["al_murho"] == beam_cu_boundary_result[i]["al_murho"])
@@ -170,6 +170,7 @@ def test_cu_boundary(beam_cu_boundary, beam_cu_boundary_result):
         assert assert_cu
         assert asser_murho
 
+
 # First HVL(mm Cu), First HVL(mm Al) == None
 # First HVL(mm Cu), First HVL(mm Al) are all less than minimum value
 # First HVL(mm Cu), First HVL(mm Al) are all greater than maximum value
@@ -186,7 +187,7 @@ def test_cu_boundary(beam_cu_boundary, beam_cu_boundary_result):
      ])
 ])
 def test_combine_boundary(beam_combine_boundary, beam_combine_boundary_result):
-    res_beams = add_murho(beam_combine_boundary)
+    res_beams = cal_murho_value(beam_combine_boundary)
     for i in range(len(res_beams)):
         if res_beams[i]["al_murho"] is None:
             assert_al = (res_beams[i]["al_murho"] == beam_combine_boundary_result[i]["al_murho"])
@@ -203,7 +204,3 @@ def test_combine_boundary(beam_combine_boundary, beam_combine_boundary_result):
         assert assert_al
         assert assert_cu
         assert asser_murho
-
-"""
-Blackbox tests:
-"""

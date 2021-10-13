@@ -1,6 +1,5 @@
 """
 This file is for calculating murho
-@Author: Hongyang Lyu
 """
 import operator
 from itertools import islice
@@ -110,7 +109,7 @@ def cal_murho(beam_measured, hvl_type):
         """But know only return None according to excel"""
         return None
     else:
-        return "Error!"
+        raise Exception("Cannot calculate by a hvl of this beams_inputs! Please check the hvl value of beams")
 
 """
 This function is to add the murho to the dict and return the updated dict
@@ -127,7 +126,7 @@ This function is to add the murho to the dict and return the updated dict
     'murho': 1.076756} 
 ,{...},...]
 """
-def add_murho(beams):
+def cal_murho_value(beams):
     temp = beams
     for beam in temp:
         al_murho, cu_murho = None, None
@@ -139,6 +138,7 @@ def add_murho(beams):
 
         beam["al_murho"], beam["cu_murho"] = al_murho, cu_murho
         if isinstance(al_murho, str) or isinstance(cu_murho, str):
+            raise Exception("Invalid inputs! Please check the hvl value of beams!")
             return "Error!"
         elif al_murho is None and cu_murho is not None:
             beam["murho"] = cu_murho
