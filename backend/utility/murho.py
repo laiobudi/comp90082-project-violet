@@ -127,26 +127,29 @@ This function is to add the murho to the dict and return the updated dict
 ,{...},...]
 """
 def cal_murho_value(beams):
-    temp = beams
-    for beam in temp:
-        al_murho, cu_murho = None, None
-        if beam["hvl_measured_al"] is not None:
-            al_murho = cal_murho(beam["hvl_measured_al"], "al")
+    try:
+        temp = beams
+        for beam in temp:
+            al_murho, cu_murho = None, None
+            if beam["hvl_measured_al"] is not None:
+                al_murho = cal_murho(beam["hvl_measured_al"], "al")
 
-        if beam["hvl_measured_cu"] is not None:
-            cu_murho = cal_murho(beam["hvl_measured_cu"], "cu")
+            if beam["hvl_measured_cu"] is not None:
+                cu_murho = cal_murho(beam["hvl_measured_cu"], "cu")
 
-        beam["al_murho"], beam["cu_murho"] = al_murho, cu_murho
-        if isinstance(al_murho, str) or isinstance(cu_murho, str):
-            raise Exception("Invalid inputs! Please check the hvl value of beams!")
-            return "Error!"
-        elif al_murho is None and cu_murho is not None:
-            beam["murho"] = cu_murho
-        elif cu_murho is None and al_murho is not None:
-            beam["murho"] = al_murho
-        elif cu_murho is not None and al_murho is not None:
-            beam["murho"] = (cu_murho + al_murho) / 2
-        else:
-            beam["murho"] = None
-    return temp
+            beam["al_murho"], beam["cu_murho"] = al_murho, cu_murho
+            if isinstance(al_murho, str) or isinstance(cu_murho, str):
+                raise Exception("Invalid inputs! Please check the hvl value of beams!")
+                return "Error!"
+            elif al_murho is None and cu_murho is not None:
+                beam["murho"] = cu_murho
+            elif cu_murho is None and al_murho is not None:
+                beam["murho"] = al_murho
+            elif cu_murho is not None and al_murho is not None:
+                beam["murho"] = (cu_murho + al_murho) / 2
+            else:
+                beam["murho"] = None
+        return temp
+    except Exception as err:
+        raise err
 
