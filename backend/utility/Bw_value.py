@@ -4,24 +4,7 @@ import pyodbc
 import backend.utility.globalvar as gl
 import backend.utility.set_global_var as sgv
 
-# input data from the `identification` sheet
-beams = [
-    {"beam_id": "Filter1", "kvp": 60, "hvl_measured_al": 1.268, "hvl_measured_cu": None},
-    {"beam_id": "Filter2", "kvp": 80, "hvl_measured_al": 2.321, "hvl_measured_cu": None},
-    {"beam_id": "Filter3", "kvp": 100, "hvl_measured_al": 2.881, "hvl_measured_cu": None},
-    {"beam_id": "Filter4", "kvp": 120, "hvl_measured_al": 5.123, "hvl_measured_cu": 0.227},
-    {"beam_id": "Filter5", "kvp": 150, "hvl_measured_al": None, "hvl_measured_cu": 0.339},
-    {"beam_id": "Filter6", "kvp": 180, "hvl_measured_al": None, "hvl_measured_cu": 0.504},
-    {"beam_id": "Filter7", "kvp": 200, "hvl_measured_al": None, "hvl_measured_cu": 1.042},
-    {"beam_id": "Filter8", "kvp": 250, "hvl_measured_al": None, "hvl_measured_cu": 2.117}
-]
-
-cones = [
-    {"cone_id": "F", "SSD": 30, "diameter": 10},
-    {"cone_id": "K", "SSD": 50, "diameter": 11.2837916709551},
-    {"cone_id": "E", "SSD": 30, "diameter": 5}
-]
-
+# The axis parameters.
 diameter_axis = gl.get_value('diameter_axis')
 ssd_al_axis = gl.get_value('ssd_al_axis')
 ssd_cu_axis = gl.get_value('ssd_cu_axis')
@@ -36,8 +19,6 @@ hvl_cu_axis = gl.get_value('hvl_cu_axis')
 ###########################
 def cal_Bw_value(cursor, beams, cones):
     result_list = {}
-    # get beams and cones input values from database.
-    # beams, cones = get_input_value()
 
     # Start calculation.
     for cone in cones:
@@ -45,11 +26,6 @@ def cal_Bw_value(cursor, beams, cones):
             # step 0.5
             # CHECK if it's Al or Cu or Both
             hvl_type = checkType(beam)
-
-            # step 1
-            # SELECT search info from DB (including their data e.g. measured HVL, Nk...)
-            # step 2
-            # given previous 2 points' nk values (a, b), and hvl values (c, e), and beam["hvl_measured_al(cu)"] (d) -> do interpolation
 
             # both Al and Cu exist, need to calculate average value
             bw_res = []
@@ -60,15 +36,12 @@ def cal_Bw_value(cursor, beams, cones):
                 bw_res.append(al_res)
                 result["Bw_Al"] = al_res
                 # print('beam: ' + str(beam) + ', cone: ' + str(cone) + 'Al: ', str(al_res))
-                # storeIntoDb(table_name, Al_column_name, al_res)
             if hvl_type["Cu"]:
                 cu_res = calculation(cursor, cone["SSD"], cone["diameter"], beam["hvl_measured_cu"], "Cu")
                 bw_res.append(cu_res)
                 result["Bw_Cu"] = cu_res
                 # print("beam: " + str(beam) + ", cone: " + str(cone) + 'Cu: ', str(cu_res))
-                # storeIntoDb(table_name, Cu_column_name, cu_res)
 
-            # storeIntoDb(table_name, Combined_column_name, sum(bw_res) / len(bw_res))
             # print("beam: " + str(beam) + ", cone: " + str(cone) + 'Combined: ', str(sum(bw_res) / len(bw_res)))
             result["Bw_Combined"] = sum(bw_res) / len(bw_res)
             result_list[beam["beam_id"] + "_" + cone["cone_id"]] = result
@@ -85,35 +58,36 @@ def calculation(cursor, ssd: float, diameter: float, hvl: float, type: str):
     else:
         raise Exception('The type should be Al or Cu.')
 
+    # If the combination of current ssd, diameter and hvl does not fall in the range of the lookup table,
+    # Return exception.
     if (ssd < ssd_axis[0] or ssd > ssd_axis[-1] or diameter < diameter_axis[0] or diameter > diameter_axis[-1] or
     hvl < hvl_axis[0] or hvl > hvl_axis[-1]):
-        raise Exception('Illegal inputs.')
+        raise Exception('Illegal inputs of ssd = %f, hvl = %f, diameter = %f and type = %s which are out of range of the lookup '
+                        'table.' % (ssd, hvl, diameter, type))
+    
+    if (ssd < 10 and hvl > 4.0):
+        raise Exception('Illegal inputs of ssd = %f, hvl = %f, diameter = %f and type = %s which are out of range of the lookup '
+                        'table.' % (ssd, hvl, diameter, type))
 
     ssd_list = check_exist(ssd, ssd_axis)
     hvl_list = check_exist(hvl, hvl_axis)
     diameter_list = check_exist(diameter, diameter_axis)
 
-    # ssd_len = len(ssd_list)
-    # hvl_len = len(hvl_list)
-    # diameter_len = len(diameter_list)
-
-    # 如果全部能匹配上，直接查询返回。
-    # if (len(ssd_list) == 1 and len(diameter_list) == 1 and len(hvl_list) == 1):
-    #     return select_from_DB(ssd_list[0], diameter_list[0], hvl_list[0], type)
-
+    # If all three values can be found in the corresponding axis, return the located value without interpolation.
     if ssd_list[0] == ssd_list[1] and diameter_list[0] == diameter_list[1] and hvl_list[0] == hvl_list[1]:
         return select_from_DB(cursor, ssd_list[0], hvl_list[0], diameter_list[0], type)
 
-    # 至少一个匹配不上，建立3D数组存值。
+    # If at least one of the value cannot be found in the axis.
     required_values = np.zeros((len(ssd_list), len(hvl_list), len(diameter_list)))
 
-    # 可能有重复查询，最多四次。
+    # There may be repeated queries, up to four times, which may be improved.
     for i in range(len(ssd_list)):
         for j in range(len(hvl_list)):
             for k in range(len(diameter_list)):
                 # print((i,j,k))
                 required_values[i, j, k] = select_from_DB(cursor, ssd_list[i], hvl_list[j], diameter_list[k], type)
 
+    # The interpolation order of ssd, hvl and diameter does not matter.
     hvl1 = interpolation(required_values[0,0,0], required_values[0,1,0], hvl_list[0], hvl_list[1], hvl)
     hvl2 = interpolation(required_values[0,0,1], required_values[0,1,1], hvl_list[0], hvl_list[1], hvl)
 
@@ -150,7 +124,6 @@ def connect_to_db():
 
 
 def select_input_from_db(cursor, audit_id):
-    # 加了cones。
 
     cones = []
     beams = []
@@ -176,7 +149,6 @@ def select_input_from_db(cursor, audit_id):
                                 + "CASE WHEN shape = 'circular' THEN field_diameter "
                                 + "	WHEN shape = 'square' THEN 2*SQRT(field_area/PI()) "
                                 + "	WHEN shape = 'rectangular' THEN 2*SQRT(field_dimension_1*field_dimension_2/PI()) "
-                                # + "ELSE要加吗？"
                                 + "END AS diameter "
                                 + "FROM cone "
                                 + "WHERE cone_id "
@@ -205,11 +177,11 @@ def check_exist(target, axis):
 def select_from_DB(cursor, ssd, hvl, diameter, type):
     #SQL query.
     # retrieve latest lookup table
-    (latest_date,) = cursor.execute("SELECT TOP 1 date_updated "
-                                    "FROM bw_al_cu "
-                                    "ORDER BY date_updated "
-                                    "DESC").fetchone()
-    latest_date = latest_date.strftime('%Y-%m-%d')
+    # (latest_date,) = cursor.execute("SELECT TOP 1 date_updated "
+    #                                 "FROM bw_al_cu "
+    #                                 "ORDER BY date_updated "
+    #                                 "DESC").fetchone()
+    # latest_date = latest_date.strftime('%Y-%m-%d')
 
     bw_lookup_value = cursor.execute("SELECT TOP 1 bw "
                                 + "FROM bw_al_cu "
@@ -218,13 +190,12 @@ def select_from_DB(cursor, ssd, hvl, diameter, type):
                                 + "AND diameter = {} ".format(diameter)
                                 + "AND hvl_{} = {}".format(type.lower(), hvl)
                                 + "ORDER BY date_updated "
-                                + "DESC").fetchall() #未完成。
+                                + "DESC").fetchall()
 
-    # Check return 数量？
-    # rowcount.
+    # Check return number.
     if len(bw_lookup_value) == 0:
         # print(1)
-        raise Exception('The bw value of ssd = %f, hvl = %f, diameter = %f, type = %s does not exist in the lookup '
+        raise Exception('The bw value of ssd = %f, hvl = %f, diameter = %f and type = %s does not exist in the lookup '
                         'table.' % (ssd, hvl, diameter, type))
 
     for row in bw_lookup_value:
@@ -256,4 +227,10 @@ def checkType(info: dict):
 #     {"beam_id": "Filter7", "kvp": 200, "hvl_measured_al": None, "hvl_measured_cu": 1.042},
 #     {"beam_id": "Filter8", "kvp": 250, "hvl_measured_al": None, "hvl_measured_cu": 2.117}
 # ]
+    # cones = [
+    #     {"cone_id": "F", "SSD": 30, "diameter": 10},
+    #     {"cone_id": "K", "SSD": 50, "diameter": 11.2837916709551},
+    #     {"cone_id": "E", "SSD": 30, "diameter": 5}
+    # ]
+
 #     cal_Bw_value(beams, cones)
